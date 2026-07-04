@@ -3,14 +3,14 @@ import * as crypto from './crypto'
 const VERSION = 0
 
 function iterateHash(data: ArrayBuffer, key: ArrayBuffer, count: number): ArrayBuffer {
-	let result = Buffer.from(data)
+		let result: Buffer = Buffer.from(data)
 
 	for (let i = 0; i < count; i++) {
 		const combined = Buffer.concat([result, Buffer.from(key)])
 		result = crypto.hash(combined)
 	}
 
-	return new Uint8Array(result).buffer
+	return new Uint8Array(result).buffer as ArrayBuffer
 }
 
 function shortToArrayBuffer(number: number): ArrayBuffer {
