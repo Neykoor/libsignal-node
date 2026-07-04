@@ -229,7 +229,7 @@ export class SessionEntry {
 	}
 }
 
-interface SerializedSessionRecord {
+export interface SerializedSessionRecord {
 	version?: string
 	registrationId?: number
 	_sessions: Record<string, SerializedSessionEntry>
@@ -289,14 +289,16 @@ export class SessionRecord {
 		}
 	}
 
-	static deserialize(data: SerializedSessionRecord): SessionRecord {
-		if (data.version !== SESSION_RECORD_VERSION) {
-			SessionRecord.migrate(data)
+	static deserialize(data: Uint8Array): SessionRecord {
+		const parsed: SerializedSessionRecord = JSON.parse(Buffer.from(data).toString('utf-8'))
+
+		if (parsed.version !== SESSION_RECORD_VERSION) {
+			SessionRecord.migrate(parsed)
 		}
 
 		const obj = new SessionRecord()
-		if (data._sessions) {
-			for (const [key, entry] of Object.entries(data._sessions)) {
+		if (parsed._sessions) {
+			for (const [key, entry] of Object.entries(parsed._sessions)) {
 				obj.sessions[key] = SessionEntry.deserialize(entry)
 			}
 		}
@@ -304,16 +306,13 @@ export class SessionRecord {
 		return obj
 	}
 
-	serialize(): { _sessions: Record<string, SerializedSessionEntry>; version: string } {
+	serialize(): Buffer {
 		const _sessions: Record<string, SerializedSessionEntry> = {}
 		for (const [key, entry] of Object.entries(this.sessions)) {
 			_sessions[key] = entry.serialize()
 		}
 
-		return {
-			_sessions,
-			version: this.version
-		}
+		return Buffer.from(JSON.stringify({ _sessions, version: this.version }), 'utf-8')
 	}
 
 	haveOpenSession(): boolean {
@@ -407,5 +406,5 @@ export class SessionRecord {
 			delete this.sessions[key]
 		}
 	}
-		}
-			
+									 }
+	
