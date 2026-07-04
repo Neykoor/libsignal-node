@@ -108,9 +108,6 @@ npm run build
 
 Compila sin errores contra `tsconfig.json` en modo `strict`.
 
-## 📜 Licencia
-
-GPL-3.0, heredada de `libsignal-node` (`this-xys/libsignal-node`).
 
 ---
 
