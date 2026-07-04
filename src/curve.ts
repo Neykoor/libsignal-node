@@ -1,6 +1,7 @@
 // @ts-ignore
 import * as curveJs from 'curve25519-js'
 import * as nodeCrypto from 'crypto'
+import { getLogger } from './logger'
 
 const PUBLIC_KEY_DER_PREFIX = Buffer.from([48, 42, 48, 5, 6, 3, 43, 101, 110, 3, 33, 0])
 const PRIVATE_KEY_DER_PREFIX = Buffer.from([48, 46, 2, 1, 0, 48, 5, 6, 3, 43, 101, 110, 4, 34, 4, 32])
@@ -42,7 +43,7 @@ function scrubPubKeyFormat(pubKey: Buffer): Buffer {
 		return pubKey.slice(1)
 	}
 
-	console.error('WARNING: Expected pubkey of length 33, please report the ST and client that generated the pubkey')
+	getLogger().warn('Expected pubkey of length 33, please report the ST and client that generated the pubkey')
 	return pubKey
 }
 
