@@ -86,7 +86,7 @@ export function verifyMAC(data: Buffer, key: Buffer, mac: Buffer, length: number
 		throw new Error('Bad MAC length')
 	}
 
-	if (!mac.equals(calculatedMac)) {
+	if (!nodeCrypto.timingSafeEqual(mac, calculatedMac)) {
 		throw new Error('Bad MAC')
 	}
 }
