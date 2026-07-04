@@ -123,6 +123,9 @@ export function calculateSignature(privKey: Buffer, message: Buffer): Buffer {
 		throw new Error('Invalid message')
 	}
 
+	// curve25519-js's bundled types require a 3rd `random` argument even though
+	// it's documented as optional and the JS implementation handles its absence.
+	// @ts-ignore
 	return Buffer.from(curveJs.sign(privKey, message))
 }
 
