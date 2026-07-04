@@ -20,7 +20,7 @@ export interface PreKey {
 export const generateIdentityKeyPair = curve.generateKeyPair
 
 export function generateRegistrationId(): number {
-	const registrationId = Uint16Array.from(nodeCrypto.randomBytes(2))[0]!
+	const registrationId = nodeCrypto.randomBytes(2).readUInt16BE(0)
 	return registrationId & 0x3fff
 }
 
