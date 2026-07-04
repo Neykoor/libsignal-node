@@ -2,14 +2,15 @@ import * as crypto from './crypto'
 
 const VERSION = 0
 
-async function iterateHash(data: ArrayBuffer, key: ArrayBuffer, count: number): Promise<ArrayBuffer> {
-	const combined = new Uint8Array(Buffer.concat([Buffer.from(data), Buffer.from(key)])).buffer
-	const result = crypto.hash(Buffer.from(combined))
-	if (--count === 0) {
-		return new Uint8Array(result).buffer
+function iterateHash(data: ArrayBuffer, key: ArrayBuffer, count: number): ArrayBuffer {
+	let result = Buffer.from(data)
+
+	for (let i = 0; i < count; i++) {
+		const combined = Buffer.concat([result, Buffer.from(key)])
+		result = crypto.hash(combined)
 	}
 
-	return iterateHash(new Uint8Array(result).buffer, key, count)
+	return new Uint8Array(result).buffer
 }
 
 function shortToArrayBuffer(number: number): ArrayBuffer {
@@ -36,7 +37,7 @@ function getEncodedChunk(hash: Uint8Array, offset: number): string {
 async function getDisplayStringFor(identifier: string, key: ArrayBuffer, iterations: number): Promise<string> {
 	const bytes = Buffer.concat([Buffer.from(shortToArrayBuffer(VERSION)), Buffer.from(key), Buffer.from(identifier)])
 	const arraybuf = new Uint8Array(bytes).buffer
-	const output = new Uint8Array(await iterateHash(arraybuf, key, iterations))
+	const output = new Uint8Array(iterateHash(arraybuf, key, iterations))
 
 	return (
 		getEncodedChunk(output, 0) +
