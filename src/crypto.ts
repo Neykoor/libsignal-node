@@ -1,14 +1,14 @@
 import * as nodeCrypto from 'crypto'
 
-function assertBuffer(value: unknown): Buffer {
-	if (!(value instanceof Buffer)) {
-		throw TypeError(`Expected Buffer instead of: ${(value as unknown as object)?.constructor?.name}`)
+function assertBuffer(value: unknown): Uint8Array {
+	if (!(value instanceof Uint8Array)) {
+		throw TypeError(`Expected Uint8Array instead of: ${(value as unknown as object)?.constructor?.name}`)
 	}
 
 	return value
 }
 
-export function encrypt(key: Buffer, data: Buffer, iv: Buffer): Buffer {
+export function encrypt(key: Uint8Array, data: Uint8Array, iv: Uint8Array): Buffer {
 	assertBuffer(key)
 	assertBuffer(data)
 	assertBuffer(iv)
@@ -17,7 +17,7 @@ export function encrypt(key: Buffer, data: Buffer, iv: Buffer): Buffer {
 	return Buffer.concat([cipher.update(data), cipher.final()])
 }
 
-export function decrypt(key: Buffer, data: Buffer, iv: Buffer): Buffer {
+export function decrypt(key: Uint8Array, data: Uint8Array, iv: Uint8Array): Buffer {
 	assertBuffer(key)
 	assertBuffer(data)
 	assertBuffer(iv)
@@ -26,7 +26,7 @@ export function decrypt(key: Buffer, data: Buffer, iv: Buffer): Buffer {
 	return Buffer.concat([decipher.update(data), decipher.final()])
 }
 
-export function calculateMAC(key: Buffer, data: Buffer): Buffer {
+export function calculateMAC(key: Uint8Array, data: Uint8Array): Buffer {
 	assertBuffer(key)
 	assertBuffer(data)
 
@@ -35,7 +35,7 @@ export function calculateMAC(key: Buffer, data: Buffer): Buffer {
 	return Buffer.from(hmac.digest())
 }
 
-export function hash(data: Buffer): Buffer {
+export function hash(data: Uint8Array): Buffer {
 	assertBuffer(data)
 
 	const sha512 = nodeCrypto.createHash('sha512')
@@ -43,7 +43,7 @@ export function hash(data: Buffer): Buffer {
 	return sha512.digest()
 }
 
-export function deriveSecrets(input: Buffer, salt: Buffer, info: Buffer, chunks?: number): Buffer[] {
+export function deriveSecrets(input: Uint8Array, salt: Uint8Array, info: Uint8Array, chunks?: number): Buffer[] {
 	assertBuffer(input)
 	assertBuffer(salt)
 	assertBuffer(info)
@@ -79,7 +79,7 @@ export function deriveSecrets(input: Buffer, salt: Buffer, info: Buffer, chunks?
 	return signed
 }
 
-export function verifyMAC(data: Buffer, key: Buffer, mac: Buffer, length: number): void {
+export function verifyMAC(data: Uint8Array, key: Uint8Array, mac: Uint8Array, length: number): void {
 	const calculatedMac = calculateMAC(key, data).slice(0, length)
 
 	if (mac.length !== length || calculatedMac.length !== length) {
