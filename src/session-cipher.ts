@@ -200,8 +200,7 @@ export class SessionCipher {
 			}
 
 			if (record.isClosed(result.session)) {
-				// The message could belong to a session that was recently superseded;
-				// this is only a problem if the currently open session is itself invalid.
+				result.session.indexInfo.used = Date.now()
 			}
 
 			await this.storeRecord(record)
@@ -306,24 +305,20 @@ export class SessionCipher {
 	}
 
 	fillMessageKeys(chain: Chain, counter: number): void {
-		if (chain.chainKey.counter >= counter) {
-			return
+		while (chain.chainKey.counter < counter) {
+			if (counter - chain.chainKey.counter > 2000) {
+				throw new errors.SessionError('Over 2000 messages into the future!')
+			}
+
+			if (chain.chainKey.key === undefined) {
+				throw new errors.SessionError('Chain closed')
+			}
+
+			const key = chain.chainKey.key
+			chain.messageKeys[chain.chainKey.counter + 1] = crypto.calculateMAC(key, Buffer.from([1]))
+			chain.chainKey.key = crypto.calculateMAC(key, Buffer.from([2]))
+			chain.chainKey.counter += 1
 		}
-
-		if (counter - chain.chainKey.counter > 2000) {
-			throw new errors.SessionError('Over 2000 messages into the future!')
-		}
-
-		if (chain.chainKey.key === undefined) {
-			throw new errors.SessionError('Chain closed')
-		}
-
-		const key = chain.chainKey.key
-		chain.messageKeys[chain.chainKey.counter + 1] = crypto.calculateMAC(key, Buffer.from([1]))
-		chain.chainKey.key = crypto.calculateMAC(key, Buffer.from([2]))
-		chain.chainKey.counter += 1
-
-		return this.fillMessageKeys(chain, counter)
 	}
 
 	maybeStepRatchet(session: SessionEntry, remoteKey: Buffer, previousCounter: number): void {
