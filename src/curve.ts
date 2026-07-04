@@ -12,16 +12,16 @@ export interface KeyPair {
 	privKey: Buffer
 }
 
-function prefixKeyInPublicKey(pubKey: Buffer): Buffer {
+function prefixKeyInPublicKey(pubKey: Uint8Array): Buffer {
 	return Buffer.concat([KEY_BUNDLE_TYPE, pubKey])
 }
 
-function validatePrivKey(privKey: Buffer): void {
+function validatePrivKey(privKey: Uint8Array): void {
 	if (privKey === undefined) {
 		throw new Error('Undefined private key')
 	}
 
-	if (!(privKey instanceof Buffer)) {
+	if (!(privKey instanceof Uint8Array)) {
 		throw new Error(`Invalid private key type: ${(privKey as unknown as object).constructor.name}`)
 	}
 
@@ -30,8 +30,8 @@ function validatePrivKey(privKey: Buffer): void {
 	}
 }
 
-function scrubPubKeyFormat(pubKey: Buffer): Buffer {
-	if (!(pubKey instanceof Buffer)) {
+function scrubPubKeyFormat(pubKey: Uint8Array): Buffer {
+	if (!(pubKey instanceof Uint8Array)) {
 		throw new Error(`Invalid public key type: ${(pubKey as unknown as object).constructor.name}`)
 	}
 
@@ -40,14 +40,14 @@ function scrubPubKeyFormat(pubKey: Buffer): Buffer {
 	}
 
 	if (pubKey.byteLength === 33) {
-		return pubKey.slice(1)
+		return Buffer.from(pubKey.slice(1))
 	}
 
 	getLogger().warn('Expected pubkey of length 33, please report the ST and client that generated the pubkey')
-	return pubKey
+	return Buffer.from(pubKey)
 }
 
-function unclampEd25519PrivateKey(clampedSk: Buffer): Uint8Array {
+function unclampEd25519PrivateKey(clampedSk: Uint8Array): Uint8Array {
 	const unclampedSk = new Uint8Array(clampedSk)
 
 	unclampedSk[0] = unclampedSk[0]! | 6
@@ -57,7 +57,7 @@ function unclampEd25519PrivateKey(clampedSk: Buffer): Uint8Array {
 	return unclampedSk
 }
 
-export function getPublicFromPrivateKey(privKey: Buffer): Buffer {
+export function getPublicFromPrivateKey(privKey: Uint8Array): Buffer {
 	const unclampedPK = unclampEd25519PrivateKey(privKey)
 	const keyPair = curveJs.generateKeyPair(unclampedPK)
 	return prefixKeyInPublicKey(Buffer.from(keyPair.public))
@@ -86,7 +86,7 @@ export function generateKeyPair(): KeyPair {
 	}
 }
 
-export function calculateAgreement(pubKeyInput: Buffer, privKey: Buffer): Buffer {
+export function calculateAgreement(pubKeyInput: Uint8Array, privKey: Uint8Array): Buffer {
 	const pubKey = scrubPubKeyFormat(pubKeyInput)
 	validatePrivKey(privKey)
 
@@ -116,7 +116,7 @@ export function calculateAgreement(pubKeyInput: Buffer, privKey: Buffer): Buffer
 	return Buffer.from(secret)
 }
 
-export function calculateSignature(privKey: Buffer, message: Buffer): Buffer {
+export function calculateSignature(privKey: Uint8Array, message: Uint8Array): Buffer {
 	validatePrivKey(privKey)
 
 	if (!message) {
@@ -129,7 +129,7 @@ export function calculateSignature(privKey: Buffer, message: Buffer): Buffer {
 	return Buffer.from(curveJs.sign(privKey, message))
 }
 
-export function verifySignature(pubKeyInput: Buffer, msg: Buffer, sig: Buffer): boolean {
+export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: Uint8Array): boolean {
 	const pubKey = scrubPubKeyFormat(pubKeyInput)
 
 	if (!pubKey || pubKey.byteLength !== 32) {
