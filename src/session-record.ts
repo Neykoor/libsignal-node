@@ -1,5 +1,6 @@
 import { BaseKeyType } from './base-key-type'
 import type { ChainType } from './chain-type'
+import { getLogger } from './logger'
 
 const CLOSED_SESSIONS_MAX = 40
 const SESSION_RECORD_VERSION = 'v1'
@@ -253,12 +254,10 @@ const migrations: Migration[] = [
 			} else {
 				for (const key in sessions) {
 					if (sessions[key]!.indexInfo.closed === -1) {
-						console.error(
-							'V1 session storage migration error: registrationId',
-							data.registrationId,
-							'for open session version',
-							data.version
-						)
+						getLogger().warn('V1 session storage migration error: missing registrationId for open session', {
+							registrationId: data.registrationId,
+							version: data.version
+						})
 					}
 				}
 			}
@@ -393,9 +392,20 @@ export class SessionRecord {
 		}
 	}
 
+	removeStaleSessions(maxAgeMs: number): void {
+		const cutoff = Date.now() - maxAgeMs
+		for (const [key, session] of Object.entries(this.sessions)) {
+			const lastUsed = session.indexInfo.used || session.indexInfo.created || 0
+			if (session.indexInfo.closed !== -1 && lastUsed < cutoff) {
+				delete this.sessions[key]
+			}
+		}
+	}
+
 	deleteAllSessions(): void {
 		for (const key of Object.keys(this.sessions)) {
 			delete this.sessions[key]
 		}
 	}
-}
+		}
+			
