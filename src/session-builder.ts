@@ -65,8 +65,7 @@ export class SessionBuilder {
 	}
 
 	async initIncoming(record: SessionRecord, message: IncomingPreKeyMessage): Promise<number | undefined> {
-		const fqAddr = this.addr.toString()
-		if (!(await this.storage.isTrustedIdentity(fqAddr, message.identityKey))) {
+		if (!(await this.storage.isTrustedIdentity(this.addr.id, message.identityKey))) {
 			throw new errors.UntrustedIdentityKeyError(this.addr.id, message.identityKey)
 		}
 
@@ -203,4 +202,4 @@ export class SessionBuilder {
 
 		ratchet.rootKey = masterKey[0]!
 	}
-}
+			}
