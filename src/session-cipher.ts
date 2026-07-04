@@ -13,9 +13,9 @@ import type { EncryptedMessage, SignalStorage } from './types'
 
 const VERSION = 3
 
-function assertBuffer(value: unknown): Buffer {
-	if (!(value instanceof Buffer)) {
-		throw TypeError(`Expected Buffer instead of: ${(value as unknown as object)?.constructor?.name}`)
+function assertBuffer(value: unknown): Uint8Array {
+	if (!(value instanceof Uint8Array)) {
+		throw TypeError(`Expected Uint8Array instead of: ${(value as unknown as object)?.constructor?.name}`)
 	}
 
 	return value
@@ -68,7 +68,7 @@ export class SessionCipher {
 		return await queueJob(this.addr.toString(), awaitable)
 	}
 
-	async encrypt(data: Buffer): Promise<EncryptedMessage> {
+	async encrypt(data: Uint8Array): Promise<EncryptedMessage> {
 		assertBuffer(data)
 		const ourIdentityKey = await this.storage.getOurIdentity()
 
@@ -162,7 +162,7 @@ export class SessionCipher {
 	}
 
 	async decryptWithSessions(
-		data: Buffer,
+		data: Uint8Array,
 		sessions: SessionEntry[]
 	): Promise<{ session: SessionEntry; plaintext: Buffer }> {
 		if (!sessions.length) {
@@ -187,7 +187,7 @@ export class SessionCipher {
 		throw new errors.SessionError('No matching sessions found for message')
 	}
 
-	async decryptWhisperMessage(data: Buffer): Promise<Buffer> {
+	async decryptWhisperMessage(data: Uint8Array): Promise<Buffer> {
 		assertBuffer(data)
 		return await this.queueJob(async () => {
 			const record = await this.getRecord()
@@ -210,7 +210,7 @@ export class SessionCipher {
 		})
 	}
 
-	async decryptPreKeyWhisperMessage(data: Buffer): Promise<Buffer> {
+	async decryptPreKeyWhisperMessage(data: Uint8Array): Promise<Buffer> {
 		assertBuffer(data)
 		const versions = this._decodeTupleByte(data[0]!)
 		if (versions[1] > 3 || versions[0] < 3) {
@@ -255,7 +255,7 @@ export class SessionCipher {
 		})
 	}
 
-	async doDecryptWhisperMessage(messageBuffer: Buffer, session: SessionEntry): Promise<Buffer> {
+	async doDecryptWhisperMessage(messageBuffer: Uint8Array, session: SessionEntry): Promise<Buffer> {
 		assertBuffer(messageBuffer)
 		if (!session) {
 			throw new TypeError('session required')
@@ -391,5 +391,4 @@ export class SessionCipher {
 			}
 		})
 	}
-					}
-			
+				}
