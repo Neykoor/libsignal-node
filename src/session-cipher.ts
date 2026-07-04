@@ -5,6 +5,7 @@ import * as errors from './errors'
 import { ProtocolAddress } from './protocol-address'
 import * as protobufs from './protobufs'
 import { queueJob } from './queue-job'
+import { wipeBuffer } from './util'
 import { SessionBuilder } from './session-builder'
 import type { Chain, SessionEntry } from './session-record'
 import { SessionRecord } from './session-record'
@@ -102,6 +103,7 @@ export class SessionCipher {
 				Buffer.alloc(32),
 				Buffer.from('WhisperMessageKeys')
 			)
+			wipeBuffer(chain.messageKeys[chain.chainKey.counter])
 			delete chain.messageKeys[chain.chainKey.counter]
 
 			const msg = protobufs.WhisperMessage.create()
@@ -288,6 +290,7 @@ export class SessionCipher {
 		delete chain.messageKeys[message.counter]
 
 		const keys = crypto.deriveSecrets(messageKey, Buffer.alloc(32), Buffer.from('WhisperMessageKeys'))
+		wipeBuffer(messageKey)
 		const ourIdentityKey = await this.storage.getOurIdentity()
 
 		const macInput = Buffer.alloc(messageProto.byteLength + 33 * 2 + 1)
@@ -330,6 +333,7 @@ export class SessionCipher {
 		const previousRatchet = session.getChain(ratchet.lastRemoteEphemeralKey)
 		if (previousRatchet) {
 			this.fillMessageKeys(previousRatchet, previousCounter)
+			wipeBuffer(previousRatchet.chainKey.key)
 			delete previousRatchet.chainKey.key
 		}
 
@@ -387,4 +391,5 @@ export class SessionCipher {
 			}
 		})
 	}
-}
+					}
+			
