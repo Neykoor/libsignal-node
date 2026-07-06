@@ -391,4 +391,4 @@ export class SessionCipher {
 			}
 		})
 	}
-				}
+}
