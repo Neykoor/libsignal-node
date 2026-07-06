@@ -202,4 +202,4 @@ export class SessionBuilder {
 
 		ratchet.rootKey = masterKey[0]!
 	}
-			}
+}
