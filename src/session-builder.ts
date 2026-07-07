@@ -76,7 +76,7 @@ export class SessionBuilder {
 		}
 
 		const preKeyPair = await this.storage.loadPreKey(message.preKeyId)
-		if (message.preKeyId && !preKeyPair) {
+		if (message.preKeyId !== undefined && !preKeyPair) {
 			throw new errors.PreKeyError('Invalid PreKey ID')
 		}
 
@@ -204,4 +204,4 @@ export class SessionBuilder {
 
 		ratchet.rootKey = masterKey[0]!
 	}
-				}
+}
