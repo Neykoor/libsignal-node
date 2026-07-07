@@ -405,5 +405,5 @@ export class SessionCipher {
 			}
 		})
 	}
-					}
-			   
+		}
+			
