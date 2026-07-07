@@ -7,7 +7,7 @@ interface QueuedJob {
 }
 
 const _queueAsyncBuckets = new Map<unknown, QueuedJob[]>()
-const _gcLimit = 10000
+const _gcLimit = 500
 
 async function _asyncQueueExecutor(queue: QueuedJob[], cleanup: () => void): Promise<void> {
 	let offt = 0
@@ -24,12 +24,8 @@ async function _asyncQueueExecutor(queue: QueuedJob[], cleanup: () => void): Pro
 		}
 
 		if (limit < queue.length) {
-			if (limit >= _gcLimit) {
-				queue.splice(0, limit)
-				offt = 0
-			} else {
-				offt = limit
-			}
+			queue.splice(0, limit)
+			offt = 0
 		} else {
 			break
 		}
