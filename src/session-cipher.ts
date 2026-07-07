@@ -5,7 +5,7 @@ import * as errors from './errors'
 import { ProtocolAddress } from './protocol-address'
 import * as protobufs from './protobufs'
 import { queueJob } from './queue-job'
-import { wipeBuffer } from './util'
+import { wipeBuffer, wipeBuffers } from './util'
 import { SessionBuilder } from './session-builder'
 import type { Chain, SessionEntry } from './session-record'
 import { SessionRecord } from './session-record'
@@ -131,6 +131,7 @@ export class SessionCipher {
 			macInput.set(msgBuf, 33 * 2 + 1)
 
 			const mac = crypto.calculateMAC(keys[1]!, macInput)
+			wipeBuffers(keys[0], keys[1], keys[2])
 			const result = Buffer.alloc(msgBuf.byteLength + 9)
 			result[0] = this._encodeTupleByte(VERSION, VERSION)
 			result.set(msgBuf, 1)
@@ -313,6 +314,7 @@ export class SessionCipher {
 		crypto.verifyMAC(macInput, keys[1]!, messageBuffer.slice(-8), 8)
 
 		const plaintext = crypto.decrypt(keys[0]!, Buffer.from(message.ciphertext), keys[2]!.slice(0, 16))
+		wipeBuffers(keys[0], keys[1], keys[2])
 		delete session.pendingPreKey
 
 		return plaintext
@@ -402,5 +404,4 @@ export class SessionCipher {
 			}
 		})
 	}
-			}
-					
+}
