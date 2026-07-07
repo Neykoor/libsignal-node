@@ -12,6 +12,7 @@ import { SessionRecord } from './session-record'
 import type { EncryptedMessage, SignalStorage } from './types'
 
 const VERSION = 3
+const DEFAULT_STALE_SESSION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000
 
 function assertBuffer(value: unknown): Uint8Array {
 	if (!(value instanceof Uint8Array)) {
@@ -24,14 +25,20 @@ function assertBuffer(value: unknown): Uint8Array {
 export class SessionCipher {
 	private addr: ProtocolAddress
 	private storage: SignalStorage
+	private staleSessionMaxAgeMs?: number
 
-	constructor(storage: SignalStorage, protocolAddress: ProtocolAddress) {
+	constructor(
+		storage: SignalStorage,
+		protocolAddress: ProtocolAddress,
+		staleSessionMaxAgeMs: number | undefined = DEFAULT_STALE_SESSION_MAX_AGE_MS
+	) {
 		if (!(protocolAddress instanceof ProtocolAddress)) {
 			throw new TypeError('protocolAddress must be a ProtocolAddress')
 		}
 
 		this.addr = protocolAddress
 		this.storage = storage
+		this.staleSessionMaxAgeMs = staleSessionMaxAgeMs
 	}
 
 	private _encodeTupleByte(number1: number, number2: number): number {
@@ -61,6 +68,10 @@ export class SessionCipher {
 
 	async storeRecord(record: SessionRecord): Promise<void> {
 		record.removeOldSessions()
+		if (this.staleSessionMaxAgeMs) {
+			record.removeStaleSessions(this.staleSessionMaxAgeMs)
+		}
+
 		await this.storage.storeSession(this.addr.toString(), record)
 	}
 
@@ -391,4 +402,5 @@ export class SessionCipher {
 			}
 		})
 	}
-}
+			}
+					
