@@ -7,6 +7,8 @@ export interface SignalStorage {
 	loadSession(id: string): Promise<SessionRecord | undefined>
 	storeSession(id: string, session: SessionRecord): Promise<void>
 	isTrustedIdentity(identifier: string, identityKey: Buffer, direction?: number): Promise<boolean> | boolean
+	saveIdentity?(identifier: string, identityKey: Buffer): Promise<boolean> | boolean
+	removeIdentity?(identifier: string): Promise<void> | void
 	loadPreKey(id?: number | string): Promise<KeyPair | undefined>
 	removePreKey(id: number): Promise<void> | void
 	loadSignedPreKey(id?: number | string): Promise<KeyPair | undefined> | KeyPair | undefined
