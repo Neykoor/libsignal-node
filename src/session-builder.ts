@@ -3,6 +3,7 @@ import { ChainType } from './chain-type'
 import * as crypto from './crypto'
 import * as curve from './curve'
 import type { KeyPair } from './curve'
+import { Direction } from './direction'
 import * as errors from './errors'
 import type { ProtocolAddress } from './protocol-address'
 import { queueJob } from './queue-job'
@@ -21,7 +22,7 @@ export class SessionBuilder {
 	async initOutgoing(device: DeviceKeyBundle): Promise<void> {
 		const fqAddr = this.addr.toString()
 		return await queueJob(fqAddr, async () => {
-			if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey))) {
+			if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
 				throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
 			}
 
@@ -66,7 +67,7 @@ export class SessionBuilder {
 	}
 
 	async initIncoming(record: SessionRecord, message: IncomingPreKeyMessage): Promise<number | undefined> {
-		if (!(await this.storage.isTrustedIdentity(this.addr.id, message.identityKey))) {
+		if (!(await this.storage.isTrustedIdentity(this.addr.id, message.identityKey, Direction.RECEIVING))) {
 			throw new errors.UntrustedIdentityKeyError(this.addr.id, message.identityKey)
 		}
 
@@ -203,4 +204,4 @@ export class SessionBuilder {
 
 		ratchet.rootKey = masterKey[0]!
 	}
-}
+				}
