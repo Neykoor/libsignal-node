@@ -60,6 +60,7 @@ export class SessionBuilder {
 			}
 
 			record.setSession(session)
+			record.removeOldSessions()
 			await this.storage.storeSession(fqAddr, record)
 		})
 	}
