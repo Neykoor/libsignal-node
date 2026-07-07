@@ -1,4 +1,3 @@
-// @ts-ignore
 import * as curveJs from 'curve25519-js'
 import * as nodeCrypto from 'crypto'
 import { getLogger } from './logger'
@@ -123,9 +122,6 @@ export function calculateSignature(privKey: Uint8Array, message: Uint8Array): Bu
 		throw new Error('Invalid message')
 	}
 
-	// curve25519-js's bundled types require a 3rd `random` argument even though
-	// it's documented as optional and the JS implementation handles its absence.
-	// @ts-ignore
 	return Buffer.from(curveJs.sign(privKey, message))
 }
 
