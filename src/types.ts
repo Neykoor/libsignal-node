@@ -1,4 +1,5 @@
 import type { KeyPair } from './curve'
+import type { Direction } from './direction'
 import type { SessionRecord } from './session-record'
 
 export type { KeyPair }
@@ -6,7 +7,7 @@ export type { KeyPair }
 export interface SignalStorage {
 	loadSession(id: string): Promise<SessionRecord | undefined>
 	storeSession(id: string, session: SessionRecord): Promise<void>
-	isTrustedIdentity(identifier: string, identityKey: Buffer, direction?: number): Promise<boolean> | boolean
+	isTrustedIdentity(identifier: string, identityKey: Buffer, direction: Direction): Promise<boolean> | boolean
 	saveIdentity?(identifier: string, identityKey: Buffer): Promise<boolean> | boolean
 	removeIdentity?(identifier: string): Promise<void> | void
 	loadPreKey(id?: number | string): Promise<KeyPair | undefined>
