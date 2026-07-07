@@ -33,6 +33,17 @@ export class MemorySignalStorage implements SignalStorage {
 		return existing.equals(identityKey)
 	}
 
+	async saveIdentity(identifier: string, identityKey: Buffer): Promise<boolean> {
+		const existing = this.trustedIdentities.get(identifier)
+		this.trustedIdentities.set(identifier, identityKey)
+		return !existing || !existing.equals(identityKey)
+	}
+
+	async removeIdentity(identifier: string): Promise<void> {
+		this.trustedIdentities.delete(identifier)
+		this.sessions.delete(identifier)
+	}
+
 	async loadPreKey(id?: number | string): Promise<KeyPair | undefined> {
 		if (id === undefined) {
 			return undefined
