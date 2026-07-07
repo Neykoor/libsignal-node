@@ -1,6 +1,7 @@
 import { ChainType } from './chain-type'
 import * as crypto from './crypto'
 import * as curve from './curve'
+import { Direction } from './direction'
 import * as errors from './errors'
 import { ProtocolAddress } from './protocol-address'
 import * as protobufs from './protobufs'
@@ -95,7 +96,7 @@ export class SessionCipher {
 			}
 
 			const remoteIdentityKey = session.indexInfo.remoteIdentityKey
-			if (!(await this.storage.isTrustedIdentity(this.addr.id, remoteIdentityKey))) {
+			if (!(await this.storage.isTrustedIdentity(this.addr.id, remoteIdentityKey, Direction.SENDING))) {
 				throw new errors.UntrustedIdentityKeyError(this.addr.id, remoteIdentityKey)
 			}
 
@@ -209,7 +210,7 @@ export class SessionCipher {
 
 			const result = await this.decryptWithSessions(data, record.getSessions())
 			const remoteIdentityKey = result.session.indexInfo.remoteIdentityKey
-			if (!(await this.storage.isTrustedIdentity(this.addr.id, remoteIdentityKey))) {
+			if (!(await this.storage.isTrustedIdentity(this.addr.id, remoteIdentityKey, Direction.RECEIVING))) {
 				throw new errors.UntrustedIdentityKeyError(this.addr.id, remoteIdentityKey)
 			}
 
@@ -404,4 +405,5 @@ export class SessionCipher {
 			}
 		})
 	}
-}
+				  }
+			
