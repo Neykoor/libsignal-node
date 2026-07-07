@@ -1,4 +1,5 @@
 import type { KeyPair } from './curve'
+import type { Direction } from './direction'
 import { SessionRecord } from './session-record'
 import type { SignalStorage } from './types'
 
@@ -23,7 +24,7 @@ export class MemorySignalStorage implements SignalStorage {
 		this.sessions.set(id, session)
 	}
 
-	async isTrustedIdentity(identifier: string, identityKey: Buffer): Promise<boolean> {
+	async isTrustedIdentity(identifier: string, identityKey: Buffer, _direction: Direction): Promise<boolean> {
 		const existing = this.trustedIdentities.get(identifier)
 		if (!existing) {
 			this.trustedIdentities.set(identifier, identityKey)
