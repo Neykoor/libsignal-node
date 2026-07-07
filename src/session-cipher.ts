@@ -197,7 +197,7 @@ export class SessionCipher {
 			}
 		}
 
-		throw new errors.SessionError('No matching sessions found for message')
+		throw Object.assign(new errors.SessionError('No matching sessions found for message'), { errors: errs })
 	}
 
 	async decryptWhisperMessage(data: Uint8Array): Promise<Buffer> {
@@ -260,7 +260,7 @@ export class SessionCipher {
 			const plaintext = await this.doDecryptWhisperMessage(Buffer.from(preKeyProto.message), session)
 			await this.storeRecord(record)
 
-			if (preKeyId) {
+			if (preKeyId !== undefined) {
 				await this.storage.removePreKey(preKeyId)
 			}
 
@@ -405,5 +405,5 @@ export class SessionCipher {
 			}
 		})
 	}
-				  }
-			
+					}
+			   
