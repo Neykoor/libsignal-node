@@ -76,7 +76,8 @@ export function generateKeyPair(): KeyPair {
 			pubKey: prefixKeyInPublicKey(pubKey),
 			privKey
 		}
-	} catch {
+	} catch (e) {
+		getLogger().debug(`x25519 native keygen failed, falling back to curve25519-js: ${(e as Error)?.message}`)
 		const keyPair = curveJs.generateKeyPair(nodeCrypto.randomBytes(32))
 		return {
 			privKey: Buffer.from(keyPair.private),
@@ -141,4 +142,4 @@ export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: U
 	}
 
 	return curveJs.verify(pubKey, msg, sig)
-    }
+}
