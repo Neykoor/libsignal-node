@@ -9,8 +9,7 @@
 		"lib/**/*"
 	],
 	"scripts": {
-		"build": "tsc -P tsconfig.json && tsc-esm-fix --tsconfig=tsconfig.json --ext=.js",
-		"prepare": "npm run build"
+		"build": "tsc -P tsconfig.json && tsc-esm-fix --tsconfig=tsconfig.json --ext=.js"
 	},
 	"dependencies": {
 		"curve25519-js": "^0.0.4",
