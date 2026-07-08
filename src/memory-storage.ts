@@ -1,7 +1,16 @@
+import { timingSafeEqual } from 'crypto'
 import type { KeyPair } from './curve'
 import type { Direction } from './direction'
 import { SessionRecord } from './session-record'
 import type { SignalStorage } from './types'
+
+function safeEqual(a: Buffer, b: Buffer): boolean {
+	if (a.byteLength !== b.byteLength) {
+		return false
+	}
+
+	return timingSafeEqual(a, b)
+}
 
 export class MemorySignalStorage implements SignalStorage {
 	private identityKeyPair: KeyPair
@@ -31,13 +40,13 @@ export class MemorySignalStorage implements SignalStorage {
 			return true
 		}
 
-		return existing.equals(identityKey)
+		return safeEqual(existing, identityKey)
 	}
 
 	async saveIdentity(identifier: string, identityKey: Buffer): Promise<boolean> {
 		const existing = this.trustedIdentities.get(identifier)
 		this.trustedIdentities.set(identifier, identityKey)
-		return !existing || !existing.equals(identityKey)
+		return !existing || !safeEqual(existing, identityKey)
 	}
 
 	async removeIdentity(identifier: string): Promise<void> {
