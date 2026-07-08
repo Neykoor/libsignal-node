@@ -76,6 +76,9 @@ export function deriveSecrets(input: Uint8Array, salt: Uint8Array, info: Uint8Ar
 		signed.push(calculateMAC(PRK, Buffer.from(infoArray)))
 	}
 
+	PRK.fill(0)
+	infoArray.fill(0)
+
 	return signed
 }
 
