@@ -1,0 +1,8 @@
+export declare class ProtocolAddress {
+    id: string;
+    deviceId: number;
+    static from(encodedAddress: string): ProtocolAddress;
+    constructor(id: string, deviceId: number);
+    toString(): string;
+    is(other: unknown): boolean;
+}
