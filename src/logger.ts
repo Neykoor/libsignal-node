@@ -1,9 +1,11 @@
 export interface SignalLogger {
 	warn(message: string, meta?: unknown): void
+	debug(message: string, meta?: unknown): void
 }
 
 const noopLogger: SignalLogger = {
-	warn(): void {}
+	warn(): void {},
+	debug(): void {}
 }
 
 let currentLogger: SignalLogger = noopLogger
