@@ -14,6 +14,7 @@ import type { EncryptedMessage, SignalStorage } from './types'
 
 const VERSION = 3
 const DEFAULT_STALE_SESSION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000
+const MIN_MESSAGE_LENGTH = 1 + 1 + 8
 
 function assertBuffer(value: unknown): Uint8Array {
 	if (!(value instanceof Uint8Array)) {
@@ -106,7 +107,7 @@ export class SessionCipher {
 			}
 
 			if (chain.chainType === ChainType.RECEIVING) {
-				throw new Error('Tried to encrypt on a receiving chain')
+				throw new errors.SessionError('Tried to encrypt on a receiving chain')
 			}
 
 			this.fillMessageKeys(chain, chain.chainKey.counter + 1)
@@ -225,6 +226,10 @@ export class SessionCipher {
 
 	async decryptPreKeyWhisperMessage(data: Uint8Array): Promise<Buffer> {
 		assertBuffer(data)
+		if (data.byteLength < MIN_MESSAGE_LENGTH) {
+			throw new errors.SessionError('Message too short')
+		}
+
 		const versions = this._decodeTupleByte(data[0]!)
 		if (versions[1] > 3 || versions[0] < 3) {
 			throw new Error('Incompatible version number on PreKeyWhisperMessage')
@@ -236,7 +241,7 @@ export class SessionCipher {
 
 			if (!record) {
 				if (preKeyProto.registrationId == null) {
-					throw new Error('No registrationId')
+					throw new errors.PreKeyError('No registrationId')
 				}
 
 				record = new SessionRecord()
@@ -274,6 +279,10 @@ export class SessionCipher {
 			throw new TypeError('session required')
 		}
 
+		if (messageBuffer.byteLength < MIN_MESSAGE_LENGTH) {
+			throw new errors.SessionError('Message too short')
+		}
+
 		const versions = this._decodeTupleByte(messageBuffer[0]!)
 		if (versions[1] > 3 || versions[0] < 3) {
 			throw new Error('Incompatible version number on WhisperMessage')
@@ -290,7 +299,7 @@ export class SessionCipher {
 		}
 
 		if (chain.chainType === ChainType.SENDING) {
-			throw new Error('Tried to decrypt on a sending chain')
+			throw new errors.SessionError('Tried to decrypt on a sending chain')
 		}
 
 		this.fillMessageKeys(chain, message.counter)
@@ -405,5 +414,4 @@ export class SessionCipher {
 			}
 		})
 	}
-		}
-			
+						 }
