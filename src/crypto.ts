@@ -28,6 +28,10 @@ export function hkdf(secret: Buffer, salt: Buffer, info: Buffer, length: number)
     return result;
 }
 
+export function deriveSecrets(secret: Buffer, salt: Buffer, info: Buffer, length: number): Buffer {
+    return hkdf(secret, salt, info, length);
+}
+
 export function aesEncrypt(plaintext: Buffer, key: Buffer, iv: Buffer): Buffer {
     const cipher = createCipheriv('aes-256-cbc', key, iv);
     return Buffer.concat([cipher.update(plaintext), cipher.final()]);
