@@ -10,11 +10,29 @@ export interface SignedPreKey {
 	keyId: number
 	keyPair: KeyPair
 	signature: Buffer
+	createdAt: number
 }
 
 export interface PreKey {
 	keyId: number
 	keyPair: KeyPair
+}
+
+export const DEFAULT_SIGNED_PRE_KEY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+
+export function shouldRotateSignedPreKey(
+	createdAt: number,
+	maxAgeMs: number = DEFAULT_SIGNED_PRE_KEY_MAX_AGE_MS
+): boolean {
+	if (!isNonNegativeInteger(createdAt)) {
+		throw new TypeError('Invalid argument for createdAt: ' + createdAt)
+	}
+
+	if (!isNonNegativeInteger(maxAgeMs)) {
+		throw new TypeError('Invalid argument for maxAgeMs: ' + maxAgeMs)
+	}
+
+	return Date.now() - createdAt >= maxAgeMs
 }
 
 export const generateIdentityKeyPair = curve.generateKeyPair
@@ -44,7 +62,8 @@ export function generateSignedPreKey(identityKeyPair: KeyPair, signedKeyId: numb
 	return {
 		keyId: signedKeyId,
 		keyPair,
-		signature: sig
+		signature: sig,
+		createdAt: Date.now()
 	}
 }
 
