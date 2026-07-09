@@ -78,9 +78,12 @@ export class SessionBuilder {
 			return undefined
 		}
 
-		const preKeyPair = await this.storage.loadPreKey(message.preKeyId)
-		if (message.preKeyId !== undefined && !preKeyPair) {
-			throw new errors.PreKeyError('Invalid PreKey ID')
+		let preKeyPair: KeyPair | undefined
+		if (message.preKeyId !== undefined) {
+			preKeyPair = await this.storage.loadPreKey(message.preKeyId)
+			if (!preKeyPair) {
+				throw new errors.PreKeyError('Invalid PreKey ID')
+			}
 		}
 
 		const signedPreKeyPair = await this.storage.loadSignedPreKey(message.signedPreKeyId)
