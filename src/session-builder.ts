@@ -7,6 +7,7 @@ import { Direction } from './direction'
 import * as errors from './errors'
 import type { ProtocolAddress } from './protocol-address'
 import { queueJob } from './queue-job'
+import { assertValidDeviceKeyBundle } from './prekey-bundle-validator'
 import { SessionEntry, SessionRecord } from './session-record'
 import type { DeviceKeyBundle, IncomingPreKeyMessage, SignalStorage } from './types'
 
@@ -20,6 +21,8 @@ export class SessionBuilder {
 	}
 
 	async initOutgoing(device: DeviceKeyBundle): Promise<void> {
+		assertValidDeviceKeyBundle(device)
+
 		const fqAddr = this.addr.toString()
 		return await queueJob(fqAddr, async () => {
 			if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
