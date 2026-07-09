@@ -3,12 +3,22 @@ export class ProtocolAddress {
 	public deviceId: number
 
 	static from(encodedAddress: string): ProtocolAddress {
-		if (typeof encodedAddress !== 'string' || !encodedAddress.match(/.*\.\d+/)) {
+		if (typeof encodedAddress !== 'string') {
 			throw new Error('Invalid address encoding')
 		}
 
-		const parts = encodedAddress.split('.')
-		return new ProtocolAddress(parts[0]!, parseInt(parts[1]!, 10))
+		const sep = encodedAddress.lastIndexOf('.')
+		if (sep === -1) {
+			throw new Error('Invalid address encoding')
+		}
+
+		const id = encodedAddress.slice(0, sep)
+		const deviceIdPart = encodedAddress.slice(sep + 1)
+		if (!/^\d+$/.test(deviceIdPart)) {
+			throw new Error('Invalid address encoding')
+		}
+
+		return new ProtocolAddress(id, parseInt(deviceIdPart, 10))
 	}
 
 	constructor(id: string, deviceId: number) {
