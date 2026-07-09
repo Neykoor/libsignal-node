@@ -38,8 +38,12 @@ export function shouldRotateSignedPreKey(
 export const generateIdentityKeyPair = curve.generateKeyPair
 
 export function generateRegistrationId(): number {
-	const registrationId = nodeCrypto.randomBytes(2).readUInt16BE(0)
-	return registrationId & 0x3fff
+	let registrationId: number
+	do {
+		registrationId = nodeCrypto.randomBytes(2).readUInt16BE(0) & 0x3fff
+	} while (registrationId === 0)
+
+	return registrationId
 }
 
 export function generateSignedPreKey(identityKeyPair: KeyPair, signedKeyId: number): SignedPreKey {
