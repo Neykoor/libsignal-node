@@ -4,6 +4,7 @@ import { getLogger } from './logger'
 
 const CLOSED_SESSIONS_MAX = 40
 const SESSION_RECORD_VERSION = 'v1'
+const SESSION_ENTRY_VERSION = 'v1'
 
 function assertBuffer(value: unknown): asserts value is Buffer {
 	if (!Buffer.isBuffer(value)) {
@@ -51,6 +52,7 @@ interface SerializedChain {
 }
 
 export interface SerializedSessionEntry {
+	entryVersion?: string
 	registrationId?: number
 	currentRatchet: {
 		ephemeralKeyPair: { pubKey: string; privKey: string }
@@ -70,7 +72,15 @@ export interface SerializedSessionEntry {
 	pendingPreKey?: { signedKeyId: number; baseKey: string; preKeyId?: number }
 }
 
+interface EntryMigration {
+	version: string
+	migrate: (data: SerializedSessionEntry) => void
+}
+
+const entryMigrations: EntryMigration[] = []
+
 export class SessionEntry {
+	public entryVersion: string = SESSION_ENTRY_VERSION
 	public registrationId?: number
 	public currentRatchet!: CurrentRatchet
 	public indexInfo!: IndexInfo
@@ -119,6 +129,7 @@ export class SessionEntry {
 
 	serialize(): SerializedSessionEntry {
 		const data: SerializedSessionEntry = {
+			entryVersion: this.entryVersion,
 			registrationId: this.registrationId,
 			currentRatchet: {
 				ephemeralKeyPair: {
@@ -150,8 +161,29 @@ export class SessionEntry {
 		return data
 	}
 
+	static migrateEntry(data: SerializedSessionEntry): void {
+		let run = data.entryVersion === undefined
+
+		for (const migration of entryMigrations) {
+			if (run) {
+				migration.migrate(data)
+			} else if (migration.version === data.entryVersion) {
+				run = true
+			}
+		}
+
+		if (!run) {
+			throw new Error('Error migrating SessionEntry')
+		}
+	}
+
 	static deserialize(data: SerializedSessionEntry): SessionEntry {
+		if (data.entryVersion !== SESSION_ENTRY_VERSION) {
+			SessionEntry.migrateEntry(data)
+		}
+
 		const obj = new SessionEntry()
+		obj.entryVersion = SESSION_ENTRY_VERSION
 		obj.registrationId = data.registrationId
 		obj.currentRatchet = {
 			ephemeralKeyPair: {
@@ -406,4 +438,5 @@ export class SessionRecord {
 			delete this.sessions[key]
 		}
 	}
-}
+				}
+			
