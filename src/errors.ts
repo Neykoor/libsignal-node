@@ -5,7 +5,7 @@ export class UntrustedIdentityKeyError extends SignalError {
 	public identityKey?: Buffer
 
 	constructor(addr: string, identityKey?: Buffer) {
-		super()
+		super(`Untrusted identity key for address: ${addr}`)
 		this.name = 'UntrustedIdentityKeyError'
 		this.addr = addr
 		this.identityKey = identityKey
