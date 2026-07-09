@@ -35,14 +35,6 @@ async function _asyncQueueExecutor(queue: QueuedJob[], cleanup: () => void): Pro
 }
 
 export function queueJob<T>(bucket: unknown, awaitable: Awaitable<T>): Promise<T> {
-	const namedAwaitable = awaitable as Awaitable<T> & { name?: string }
-	if (!namedAwaitable.name) {
-		Object.defineProperty(namedAwaitable, 'name', { writable: true })
-		if (typeof bucket === 'string') {
-			namedAwaitable.name = bucket
-		}
-	}
-
 	let inactive = false
 	if (!_queueAsyncBuckets.has(bucket)) {
 		_queueAsyncBuckets.set(bucket, [])
