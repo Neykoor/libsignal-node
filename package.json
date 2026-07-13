@@ -1,5 +1,5 @@
 {
-	"name": "libsignal-node-ts",
+	"name": "@neykoor/libsignal-node",
 	"version": "1.0.1",
 	"description": "TypeScript port of libsignal-node, compatible with BaileysX",
 	"type": "module",
