@@ -1,6 +1,6 @@
 {
 	"name": "libsignal-node-ts",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "TypeScript port of libsignal-node, compatible with BaileysX",
 	"type": "module",
 	"main": "lib/index.js",
@@ -9,6 +9,10 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
+		},
+		"./lib/*.js": {
+			"types": "./lib/*.d.ts",
+			"import": "./lib/*.js"
 		},
 		"./package.json": "./package.json"
 	},
