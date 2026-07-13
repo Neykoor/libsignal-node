@@ -3,6 +3,7 @@ export * as curve from './curve.js';
 export * as keyhelper from './keyhelper.js';
 export { ProtocolAddress } from './protocol-address.js';
 export { SessionBuilder } from './session-builder.js';
+export { assertValidDeviceKeyBundle } from './prekey-bundle-validator.js';
 export { SessionCipher } from './session-cipher.js';
 export { SessionRecord, SessionEntry } from './session-record.js';
 export { FingerprintGenerator } from './numeric-fingerprint.js';
