@@ -19,18 +19,36 @@
 
 ## ✨ ¿Qué es esto?
 
-`libsignal-node-ts` es una reescritura completa en **TypeScript** de la librería [`libsignal-node`](https://github.com/this-xys/libsignal-node) (Signal Protocol / Double Ratchet), pensada como **reemplazo directo** de la dependencia `libsignal` que usa BaileysX.
+`libsignal-node-ts` es una reescritura completa en **TypeScript** de la librería [`libsignal-node`](https://github.com/WhiskeySockets/libsignal-node) (Signal Protocol / Double Ratchet), pensada como **reemplazo directo** de la dependencia `libsignal` que usa BaileysX.
 
-Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta.
+Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y varias correcciones de seguridad y memoria que la librería original no tiene.
 
 ## 🚀 Características
 
-- 🔒 Implementación completa del **Double Ratchet** (X3DH, sesiones, ratcheting)
-- 📦 Tipado estricto (`strict: true`, `noUncheckedIndexedAccess`)
-- 🟦 100% TypeScript en `src/` — sin archivos `.js` sueltos, incluyendo los protobufs de Signal
-- ⚡ ESM nativo
-- 🔁 API idéntica a `libsignal-node` — `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`
-- 🧩 Drop-in: solo cambias el import, no tocas el resto de tu código
+### Lo que ya tiene `libsignal-node-ts` (y `libsignal-node` original no)
+
+- 🛡️ **Verificación de firma real en `initOutgoing`** — la librería original invoca `curve.verifySignature(..., true)`, y ese cuarto parámetro (`isInit`) hace que la firma del signed prekey **nunca se valide** (`return isInit ? true : curveJs.verify(...)`). En `libsignal-node-ts` se eliminó ese bypass: la firma del signed prekey siempre se verifica de verdad antes de iniciar sesión.
+- ✅ **Validador de prekey bundles** (`assertValidDeviceKeyBundle`) — módulo nuevo que revisa longitudes de claves, rangos de `registrationId` y `keyId` antes de aceptar un bundle remoto. La librería original no valida nada de esto, solo confía en la forma del objeto.
+- 🧹 **Borrado de material sensible en memoria** (`wipeBuffer` / `wipeBuffers`) — las claves de mensaje, cadenas y secretos intermedios se ponen a cero después de usarse en `encrypt`/`decrypt`. La versión original nunca limpia estos buffers, quedan en memoria hasta que el GC los recoja.
+- 🔐 **Comparación de identidades a tiempo constante** — `MemorySignalStorage` usa `timingSafeEqual` para comparar identity keys, evitando ataques de timing. La original no trae ningún storage de referencia.
+- 💾 **`MemorySignalStorage` incluida** — implementación lista para usar de `SignalStorage` (sesiones, prekeys, identidades de confianza). En la librería original tienes que escribir tu propio storage desde cero, no traen ninguno.
+- 🧾 **Sistema de logging inyectable** (`setLogger` / `getLogger`) — permite conectar tu logger (pino, winston, consola) o silenciar todo. La original usa `console.error` fijo, sin forma de desactivarlo.
+- 🏷️ **Tipado estricto de punta a punta** — `strict: true`, `noUncheckedIndexedAccess`, interfaces para `SignalStorage`, `DeviceKeyBundle`, `EncryptedMessage`, etc. La original es JS puro sin ningún `.d.ts` propio para su lógica principal.
+- 🟦 **100% TypeScript en `src/`**, incluidos los mensajes protobuf de Signal (`whisper-text-protocol.ts`) — sin un solo `.js` generado a mano.
+
+### Lo que tienen en común
+
+- Implementación completa del **Double Ratchet** (X3DH, sesiones, ratcheting)
+- Misma API pública: `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`, `keyhelper`, `curve`, `crypto`
+- Mismas dependencias en runtime: `curve25519-js` y `protobufjs`
+- Soporte nativo de `x25519` vía `node:crypto` con fallback a `curve25519-js`
+
+### Pendiente por traer desde `libsignal-node` (roadmap)
+
+- 📄 **`WhisperTextProtocol.proto` + script de generación** — la original mantiene el `.proto` fuente y un `generate-proto.sh` que regenera el código con `pbjs`. En `libsignal-node-ts` el protobuf está portado a mano en TypeScript; falta el `.proto` como fuente de verdad y un script equivalente para regenerarlo automáticamente.
+- 🔁 **Workflows de CI/CD** (`.github/workflows`) — build, lint y publish automático a npm, como los que trae la original.
+- 🧹 **Config de ESLint propia** (`.eslintrc.json`) para forzar el mismo estilo en todo el repo.
+- 📜 **`SECURITY.md` y `CODE_OF_CONDUCT.md`** — políticas de reporte de vulnerabilidades y de comunidad que la original sí documenta.
 
 ## 📦 Instalación
 
@@ -39,37 +57,6 @@ npm install libsignal-node-ts
 ```
 
 Dependencias en tiempo de ejecución: `curve25519-js` y `protobufjs` (se instalan solas junto con el paquete).
-
-## 📂 Estructura del código fuente
-
-```
-libsignal-node-ts/
-├── src/
-│   ├── index.ts                     # punto de entrada
-│   ├── protocol-address.ts
-│   ├── session-builder.ts
-│   ├── session-cipher.ts
-│   ├── session-record.ts
-│   ├── curve.ts
-│   ├── curve25519-js.d.ts
-│   ├── crypto.ts
-│   ├── keyhelper.ts
-│   ├── numeric-fingerprint.ts
-│   ├── prekey-bundle-validator.ts
-│   ├── memory-storage.ts
-│   ├── logger.ts
-│   ├── errors.ts
-│   ├── direction.ts
-│   ├── base-key-type.ts
-│   ├── chain-type.ts
-│   ├── queue-job.ts
-│   ├── types.ts
-│   ├── protobufs.ts
-│   └── whisper-text-protocol.ts     # mensajes protobuf de Signal, TypeScript puro
-├── lib/                              # salida compilada (lo que se publica en npm)
-├── package.json
-└── tsconfig.json
-```
 
 ## 🔧 Uso en BaileysX
 
