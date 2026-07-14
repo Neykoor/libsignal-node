@@ -27,6 +27,7 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta.
 
 - 🔒 Implementación completa del **Double Ratchet** (X3DH, sesiones, ratcheting)
 - 📦 Tipado estricto (`strict: true`, `noUncheckedIndexedAccess`)
+- 🟦 100% TypeScript en `src/` — sin archivos `.js` sueltos, incluyendo los protobufs de Signal
 - ⚡ ESM nativo
 - 🔁 API idéntica a `libsignal-node` — `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`
 - 🧩 Drop-in: solo cambias el import, no tocas el resto de tu código
@@ -64,8 +65,7 @@ libsignal-node-ts/
 │   ├── queue-job.ts
 │   ├── types.ts
 │   ├── protobufs.ts
-│   ├── whisper-text-protocol.js     # protobufs generados (ESM)
-│   └── whisper-text-protocol.d.ts
+│   └── whisper-text-protocol.ts     # mensajes protobuf de Signal, TypeScript puro
 ├── lib/                              # salida compilada (lo que se publica en npm)
 ├── package.json
 └── tsconfig.json
@@ -121,7 +121,7 @@ const { type, body } = await cipher.encrypt(Buffer.from('hola mundo'))
 npm run build
 ```
 
-Compila `src/` a `lib/` con `tsc` en modo `strict` y corrige las extensiones `.js` de los imports ESM con `tsc-esm-fix`.
+Compila `src/` a `lib/` con `tsc` en modo `strict` y corrige las extensiones `.js` de los imports ESM con `tsc-esm-fix`. Con `allowJs` desactivado en `tsconfig.json`, el build falla si se cuela cualquier archivo `.js` dentro de `src/`.
 
 ---
 
