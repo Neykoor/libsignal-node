@@ -1,4 +1,4 @@
-import * as curveJs from 'curve25519-js'
+import * as curveJs from '@neykoor/curve25519-ts'
 import * as nodeCrypto from 'crypto'
 import { getLogger } from './logger'
 
@@ -142,4 +142,4 @@ export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: U
 	}
 
 	return curveJs.verify(pubKey, msg, sig)
-}
+	}
