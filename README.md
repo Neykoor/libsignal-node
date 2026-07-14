@@ -113,5 +113,5 @@ Compila `src/` a `lib/` con `tsc` en modo `strict` y corrige las extensiones `.j
 ---
 
 <div align="center">
-Hecho con ☕ para el ecosistema <b>Eris-MD</b> / <b>BaileysX</b>
+Hecho con ☕ para el ecosistema <b>Furina-MD</b> / <b>BaileysX</b>
 </div>
