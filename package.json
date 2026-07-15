@@ -5,6 +5,7 @@
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "prettier": "@neykoor/prettier-config/prettier",
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
@@ -20,7 +21,9 @@
     "lib/**/*"
   ],
   "scripts": {
-    "build": "tsc -P tsconfig.json && tsc-esm-fix --tsconfig=tsconfig.json --ext=.js"
+    "build": "tsc -P tsconfig.json && tsc-esm-fix --tsconfig=tsconfig.json --ext=.js",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
     "@neykoor/curve25519-ts": "^0.0.11",
@@ -30,7 +33,12 @@
   "devDependencies": {
     "typescript": "5.6.3",
     "@types/node": "22.9.3",
-    "tsc-esm-fix": "^3.1.2"
+    "tsc-esm-fix": "^3.1.2",
+    "@neykoor/prettier-config": "^0.1.2",
+    "prettier": "^3.3.2",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0"
   },
   "engines": {
     "node": ">=20.0.0"
