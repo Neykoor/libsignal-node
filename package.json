@@ -22,6 +22,8 @@
   ],
   "scripts": {
     "build": "tsc -P tsconfig.json && tsc-esm-fix --tsconfig=tsconfig.json --ext=.js",
+    "prepack": "npm run build",
+    "prepare": "npm run build",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\""
   },
