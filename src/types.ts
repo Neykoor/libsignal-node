@@ -20,7 +20,7 @@ export interface SignalStorage {
 }
 
 export interface SenderKeyStore {
-  loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord>
+  loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord | undefined>
   storeSenderKey(senderKeyName: SenderKeyName, record: SenderKeyRecord): Promise<void>
 }
 
