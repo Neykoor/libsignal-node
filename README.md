@@ -6,7 +6,7 @@
 
 **Port 100% TypeScript de `libsignal-node`, compatible con [BaileysX](https://github.com/Neykoor/BaileysX)**
 
-[![npm](https://img.shields.io/badge/npm-libsignal--node--ts-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/package/libsignal-node-ts)
+[![npm](https://img.shields.io/badge/npm-%40neykoor%2Flibsignal--node-CB3837?logo=npm&logoColor=white)](https://www.npmjs.com/package/@neykoor/libsignal-node)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![ESM](https://img.shields.io/badge/Module-ESM-yellow)](https://nodejs.org/api/esm.html)
 [![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -40,8 +40,8 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 
 - Implementación completa del **Double Ratchet** (X3DH, sesiones, ratcheting)
 - Misma API pública: `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`, `keyhelper`, `curve`, `crypto`
-- Mismas dependencias en runtime: `curve25519-js` y `protobufjs`
-- Soporte nativo de `x25519` vía `node:crypto` con fallback a `curve25519-js`
+- Misma base criptográfica que `libsignal-node` (curve25519 y `protobufjs`), aquí vía `@neykoor/curve25519-ts`
+- Soporte nativo de `x25519` vía `node:crypto` con fallback a `@neykoor/curve25519-ts`
 
 ### Pendiente por traer desde `libsignal-node` (roadmap)
 
@@ -53,10 +53,10 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 ## 📦 Instalación
 
 ```bash
-npm install libsignal-node-ts
+npm install @neykoor/libsignal-node
 ```
 
-Dependencias en tiempo de ejecución: `curve25519-js` y `protobufjs` (se instalan solas junto con el paquete).
+Dependencias en tiempo de ejecución: `@neykoor/curve25519-ts`, `pino` y `protobufjs` (se instalan solas junto con el paquete).
 
 ## 🔧 Uso en BaileysX
 
@@ -72,21 +72,21 @@ import { PreKeyWhisperMessage } from 'libsignal/lib/protobufs.js'
 por:
 
 ```ts
-import * as libsignal from 'libsignal-node-ts'
-import { protobufs } from 'libsignal-node-ts'
+import * as libsignal from '@neykoor/libsignal-node'
+import { protobufs } from '@neykoor/libsignal-node'
 const { PreKeyWhisperMessage } = protobufs
 ```
 
 Y en el `package.json` de tu proyecto, quita la dependencia `libsignal` y agrega:
 
 ```json
-"libsignal-node-ts": "^1.0.0"
+"@neykoor/libsignal-node": "^1.0.5"
 ```
 
 ## 📖 Uso básico
 
 ```ts
-import { ProtocolAddress, SessionBuilder, SessionCipher, MemorySignalStorage, keyhelper } from 'libsignal-node-ts'
+import { ProtocolAddress, SessionBuilder, SessionCipher, MemorySignalStorage, keyhelper } from '@neykoor/libsignal-node'
 
 const identityKeyPair = keyhelper.generateIdentityKeyPair()
 const registrationId = keyhelper.generateRegistrationId()
