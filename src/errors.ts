@@ -32,3 +32,10 @@ export class PreKeyError extends SessionError {
     this.name = "PreKeyError"
   }
 }
+
+export class SenderKeyError extends SignalError {
+  constructor(message?: string) {
+    super(message)
+    this.name = "SenderKeyError"
+  }
+}
