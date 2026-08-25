@@ -1,5 +1,7 @@
 import type { KeyPair } from "./curve"
 import type { Direction } from "./direction"
+import type { SenderKeyName } from "./sender-key-name"
+import type { SenderKeyRecord } from "./sender-key-record"
 import type { SessionRecord } from "./session-record"
 
 export type { KeyPair }
@@ -15,6 +17,11 @@ export interface SignalStorage {
   loadSignedPreKey(id?: number | string): Promise<KeyPair | undefined> | KeyPair | undefined
   getOurRegistrationId(): Promise<number> | number
   getOurIdentity(): Promise<KeyPair> | KeyPair
+}
+
+export interface SenderKeyStore {
+  loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord>
+  storeSenderKey(senderKeyName: SenderKeyName, record: SenderKeyRecord): Promise<void>
 }
 
 export interface DeviceKeyBundle {
