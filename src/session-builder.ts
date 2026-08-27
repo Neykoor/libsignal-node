@@ -29,7 +29,7 @@ export class SessionBuilder {
         throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
       }
 
-      if (!curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature)) {
+      if (!curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature, true)) {
         throw new Error("Signature validation failed")
       }
 
@@ -210,4 +210,4 @@ export class SessionBuilder {
 
     ratchet.rootKey = masterKey[0]!
   }
-		}
+}
