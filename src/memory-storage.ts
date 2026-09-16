@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "crypto"
 import type { KeyPair } from "./curve"
 import type { Direction } from "./direction"
+import type { SignedPreKey } from "./keyhelper"
+import type { PreKeyPoolStorage } from "./prekey-pool"
 import { SessionRecord } from "./session-record"
 import type { SignalStorage } from "./types"
 
@@ -12,13 +14,15 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
   return timingSafeEqual(a, b)
 }
 
-export class MemorySignalStorage implements SignalStorage {
+export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage {
   private identityKeyPair: KeyPair
   private registrationId: number
   private sessions = new Map<string, SessionRecord>()
   private preKeys = new Map<number, KeyPair>()
   private signedPreKeys = new Map<number, KeyPair>()
   private trustedIdentities = new Map<string, Buffer>()
+  private nextPreKeyId = 1
+  private latestSignedPreKey: SignedPreKey | undefined
 
   constructor(identityKeyPair: KeyPair, registrationId: number) {
     this.identityKeyPair = identityKeyPair
@@ -86,7 +90,29 @@ export class MemorySignalStorage implements SignalStorage {
     this.preKeys.set(id, keyPair)
   }
 
-  storeSignedPreKey(id: number, keyPair: KeyPair): void {
-    this.signedPreKeys.set(id, keyPair)
+  storeSignedPreKey(idOrRecord: number | SignedPreKey, keyPair?: KeyPair): void {
+    if (typeof idOrRecord === "number") {
+      this.signedPreKeys.set(idOrRecord, keyPair!)
+      return
+    }
+
+    this.signedPreKeys.set(idOrRecord.keyId, idOrRecord.keyPair)
+    this.latestSignedPreKey = idOrRecord
+  }
+
+  async getPreKeyCount(): Promise<number> {
+    return this.preKeys.size
+  }
+
+  async getNextPreKeyId(): Promise<number> {
+    return this.nextPreKeyId
+  }
+
+  async setNextPreKeyId(id: number): Promise<void> {
+    this.nextPreKeyId = id
+  }
+
+  async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
+    return this.latestSignedPreKey
   }
 }
