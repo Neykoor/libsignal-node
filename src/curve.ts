@@ -86,6 +86,46 @@ export function generateKeyPair(): KeyPair {
   }
 }
 
+export async function generateKeyPairAsync(): Promise<KeyPair> {
+  try {
+    const { publicKey: publicDerBytes, privateKey: privateDerBytes } = await new Promise<{
+      publicKey: Buffer
+      privateKey: Buffer
+    }>((resolve, reject) => {
+      nodeCrypto.generateKeyPair(
+        "x25519",
+        {
+          publicKeyEncoding: { format: "der", type: "spki" },
+          privateKeyEncoding: { format: "der", type: "pkcs8" }
+        },
+        (err, publicKey, privateKey) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve({ publicKey: publicKey as Buffer, privateKey: privateKey as Buffer })
+          }
+        }
+      )
+    })
+
+    const pubKey = publicDerBytes.slice(PUBLIC_KEY_DER_PREFIX.length, PUBLIC_KEY_DER_PREFIX.length + 32)
+    const privKey = privateDerBytes.slice(PRIVATE_KEY_DER_PREFIX.length, PRIVATE_KEY_DER_PREFIX.length + 32)
+
+    return {
+      pubKey: prefixKeyInPublicKey(pubKey),
+      privKey
+    }
+  } catch (e) {
+    getLogger().debug(`x25519 native async keygen failed, falling back to curve25519-js: ${(e as Error)?.message}`)
+    await new Promise((resolve) => setImmediate(resolve))
+    const keyPair = curveJs.generateKeyPair(nodeCrypto.randomBytes(32))
+    return {
+      privKey: Buffer.from(keyPair.private),
+      pubKey: prefixKeyInPublicKey(Buffer.from(keyPair.public))
+    }
+  }
+}
+
 export function calculateAgreement(pubKeyInput: Uint8Array, privKey: Uint8Array): Buffer {
   const pubKey = scrubPubKeyFormat(pubKeyInput)
   validatePrivKey(privKey)
