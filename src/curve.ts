@@ -166,7 +166,7 @@ export function calculateSignature(privKey: Uint8Array, message: Uint8Array): Bu
   return Buffer.from(curveJs.sign(privKey, message))
 }
 
-export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: Uint8Array, isInit?: boolean): boolean {
+export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: Uint8Array): boolean {
   const pubKey = scrubPubKeyFormat(pubKeyInput)
 
   if (!pubKey || pubKey.byteLength !== 32) {
@@ -181,5 +181,5 @@ export function verifySignature(pubKeyInput: Uint8Array, msg: Uint8Array, sig: U
     throw new Error("Invalid signature")
   }
 
-  return isInit ? true : curveJs.verify(pubKey, msg, sig)
+  return curveJs.verify(pubKey, msg, sig)
 }
