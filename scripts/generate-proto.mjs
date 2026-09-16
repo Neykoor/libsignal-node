@@ -1,20 +1,5 @@
 #!/usr/bin/env node
-/**
- * Equivalente a `generate-proto.sh` de libsignal-node (JS), adaptado a este repo:
- *
- *   yarn pbjs -t static-module -w commonjs -o ./src/WhisperTextProtocol.js ./protos/WhisperTextProtocol.proto
- *
- * En libsignal-node-ts el protobuf está portado a mano en `src/whisper-text-protocol.ts`
- * (ver README, sección "100% TypeScript en src/"), así que este script NO escribe nada
- * dentro de `src/`. Regenera el módulo estático a partir del `.proto` (fuente de verdad)
- * en `generated/`, para poder diffear manualmente contra el port a mano cuando el
- * `.proto` cambie.
- *
- * Para una verificación automática de compatibilidad de bytes, usa `npm run verify:proto`
- * en vez de leer el diff de este generado.
- *
- * Uso: npm run generate:proto
- */
+
 import { execFileSync } from "node:child_process"
 import { mkdirSync } from "node:fs"
 import { fileURLToPath } from "node:url"
