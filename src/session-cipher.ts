@@ -343,6 +343,7 @@ export class SessionCipher {
       const key = chain.chainKey.key
       chain.messageKeys[chain.chainKey.counter + 1] = crypto.calculateMAC(key, Buffer.from([1]))
       chain.chainKey.key = crypto.calculateMAC(key, Buffer.from([2]))
+      wipeBuffer(key)
       chain.chainKey.counter += 1
     }
   }
@@ -368,7 +369,10 @@ export class SessionCipher {
       session.deleteChain(ratchet.ephemeralKeyPair.pubKey)
     }
 
+    const previousEphemeralPrivKey = ratchet.ephemeralKeyPair.privKey
     ratchet.ephemeralKeyPair = curve.generateKeyPair()
+    wipeBuffer(previousEphemeralPrivKey)
+
     this.calculateRatchet(session, remoteKey, true)
     ratchet.lastRemoteEphemeralKey = remoteKey
   }
@@ -377,6 +381,8 @@ export class SessionCipher {
     const ratchet = session.currentRatchet
     const sharedSecret = curve.calculateAgreement(remoteKey, ratchet.ephemeralKeyPair.privKey)
     const masterKey = crypto.deriveSecrets(sharedSecret, ratchet.rootKey, Buffer.from("WhisperRatchet"), 2)
+    wipeBuffer(sharedSecret)
+
     const chainKey = sending ? ratchet.ephemeralKeyPair.pubKey : remoteKey
 
     session.addChain(chainKey, {
@@ -388,7 +394,9 @@ export class SessionCipher {
       chainType: sending ? ChainType.SENDING : ChainType.RECEIVING
     })
 
+    const previousRootKey = ratchet.rootKey
     ratchet.rootKey = masterKey[0]!
+    wipeBuffer(previousRootKey)
   }
 
   async hasOpenSession(): Promise<boolean> {
