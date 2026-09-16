@@ -1,6 +1,7 @@
 import { BaseKeyType } from "./base-key-type"
 import type { ChainType } from "./chain-type"
 import { getLogger } from "./logger"
+import { wipeBuffer } from "./util"
 
 const CLOSED_SESSIONS_MAX = 40
 const SESSION_RECORD_VERSION = "v1"
@@ -114,8 +115,14 @@ export class SessionEntry {
   deleteChain(key: Buffer): void {
     assertBuffer(key)
     const id = key.toString("base64")
-    if (!Object.prototype.hasOwnProperty.call(this._chains, id)) {
+    const chain = this._chains[id]
+    if (!chain) {
       throw new ReferenceError("Not Found")
+    }
+
+    wipeBuffer(chain.chainKey.key)
+    for (const messageKey of Object.values(chain.messageKeys)) {
+      wipeBuffer(messageKey)
     }
 
     delete this._chains[id]
@@ -124,6 +131,18 @@ export class SessionEntry {
   *chains(): IterableIterator<[Buffer, Chain]> {
     for (const [k, v] of Object.entries(this._chains)) {
       yield [Buffer.from(k, "base64"), v]
+    }
+  }
+
+  wipeKeyMaterial(): void {
+    wipeBuffer(this.currentRatchet.ephemeralKeyPair.privKey)
+    wipeBuffer(this.currentRatchet.rootKey)
+
+    for (const chain of Object.values(this._chains)) {
+      wipeBuffer(chain.chainKey.key)
+      for (const messageKey of Object.values(chain.messageKeys)) {
+        wipeBuffer(messageKey)
+      }
     }
   }
 
@@ -416,6 +435,7 @@ export class SessionRecord {
       }
 
       if (oldestKey) {
+        this.sessions[oldestKey]!.wipeKeyMaterial()
         delete this.sessions[oldestKey]
       } else {
         throw new Error("Corrupt sessions object")
@@ -428,6 +448,7 @@ export class SessionRecord {
     for (const [key, session] of Object.entries(this.sessions)) {
       const lastUsed = session.indexInfo.used || session.indexInfo.created || 0
       if (session.indexInfo.closed !== -1 && lastUsed < cutoff) {
+        session.wipeKeyMaterial()
         delete this.sessions[key]
       }
     }
@@ -435,6 +456,7 @@ export class SessionRecord {
 
   deleteAllSessions(): void {
     for (const key of Object.keys(this.sessions)) {
+      this.sessions[key]!.wipeKeyMaterial()
       delete this.sessions[key]
     }
   }
