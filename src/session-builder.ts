@@ -29,7 +29,7 @@ export class SessionBuilder {
         throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
       }
 
-      if (!curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature, true)) {
+      if (!curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature)) {
         throw new Error("Signature validation failed")
       }
 
