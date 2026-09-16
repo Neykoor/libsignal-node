@@ -35,6 +35,9 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 - 🧾 **Sistema de logging inyectable** (`setLogger` / `getLogger`) — permite conectar tu logger (pino, winston, consola) o silenciar todo. La original usa `console.error` fijo, sin forma de desactivarlo.
 - 🏷️ **Tipado estricto de punta a punta** — `strict: true`, `noUncheckedIndexedAccess`, interfaces para `SignalStorage`, `DeviceKeyBundle`, `EncryptedMessage`, etc. La original es JS puro sin ningún `.d.ts` propio para su lógica principal.
 - 🟦 **100% TypeScript en `src/`**, incluidos los mensajes protobuf de Signal (`whisper-text-protocol.ts`) — sin un solo `.js` generado a mano.
+- 📄 **`WhisperTextProtocol.proto` como fuente de verdad** (`protos/`), igual que la original, más dos scripts que la original no tiene:
+  - `npm run generate:proto` — equivalente a `generate-proto.sh` (usa `pbjs`/`pbts`), pero escribe a `generated/` en vez de `src/`, para no romper el port a mano.
+  - `npm run verify:proto` — carga el `.proto` en runtime con `protobufjs` y hace un round-trip encode/decode contra las clases de `whisper-text-protocol.ts`, comparando bytes. Es la forma real de detectar si el port a mano se desincroniza del `.proto` (requiere `npm run build` antes).
 
 ### Lo que tienen en común
 
@@ -45,7 +48,6 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 
 ### Pendiente por traer desde `libsignal-node` (roadmap)
 
-- 📄 **`WhisperTextProtocol.proto` + script de generación** — la original mantiene el `.proto` fuente y un `generate-proto.sh` que regenera el código con `pbjs`. En `libsignal-node-ts` el protobuf está portado a mano en TypeScript; falta el `.proto` como fuente de verdad y un script equivalente para regenerarlo automáticamente.
 - 🔁 **Workflows de CI/CD** (`.github/workflows`) — build, lint y publish automático a npm, como los que trae la original.
 - 🧹 **Config de ESLint propia** (`.eslintrc.json`) para forzar el mismo estilo en todo el repo.
 - 📜 **`SECURITY.md` y `CODE_OF_CONDUCT.md`** — políticas de reporte de vulnerabilidades y de comunidad que la original sí documenta.
