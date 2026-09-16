@@ -1,6 +1,6 @@
 {
   "name": "@neykoor/libsignal-node",
-  "version": "1.0.9",
+  "version": "1.0.8",
   "description": "TypeScript port of libsignal-node, compatible with BaileysX",
   "type": "module",
   "main": "lib/index.js",
@@ -25,7 +25,7 @@
     "prepack": "npm run build",
     "prepare": "npm run build",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.mjs\"",
     "generate:proto": "node scripts/generate-proto.mjs",
     "verify:proto": "node scripts/verify-proto.mjs"
   },
