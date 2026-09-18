@@ -12,10 +12,7 @@ export class GroupSessionBuilder {
     this.senderKeyStore = senderKeyStore
   }
 
-  /**
-   * Procesa un SenderKeyDistributionMessage recibido de otro miembro del grupo
-   * y guarda su sender key state para poder descifrar sus mensajes.
-   */
+  
   async process(
     senderKeyName: SenderKeyName,
     senderKeyDistributionMessage: SenderKeyDistributionMessage
@@ -32,10 +29,7 @@ export class GroupSessionBuilder {
     await this.senderKeyStore.storeSenderKey(senderKeyName, senderKeyRecord)
   }
 
-  /**
-   * Crea (o reutiliza) nuestra propia sender key para el grupo y devuelve el
-   * SenderKeyDistributionMessage que hay que enviar al resto de miembros.
-   */
+  
   async create(senderKeyName: SenderKeyName): Promise<SenderKeyDistributionMessage> {
     const senderKeyRecord = (await this.senderKeyStore.loadSenderKey(senderKeyName)) ?? new SenderKeyRecord()
 
@@ -52,6 +46,31 @@ export class GroupSessionBuilder {
     const state = senderKeyRecord.getSenderKeyState()
     if (!state) {
       throw new SenderKeyError("Failed to create sender key state")
+    }
+
+    const chainKey = state.getSenderChainKey()
+
+    return new SenderKeyDistributionMessage(
+      state.getKeyId(),
+      chainKey.getIteration(),
+      chainKey.getSeed(),
+      state.getSigningKeyPublic()
+    )
+  }
+
+  async rotate(senderKeyName: SenderKeyName): Promise<SenderKeyDistributionMessage> {
+    const keyId = groupKeyHelper.generateSenderKeyId()
+    const senderKey = groupKeyHelper.generateSenderKey()
+    const signingKey = groupKeyHelper.generateSenderSigningKey()
+
+    const senderKeyRecord = new SenderKeyRecord()
+    senderKeyRecord.setSenderKeyState(keyId, 0, senderKey, signingKey.pubKey, signingKey.privKey)
+
+    await this.senderKeyStore.storeSenderKey(senderKeyName, senderKeyRecord)
+
+    const state = senderKeyRecord.getSenderKeyState()
+    if (!state) {
+      throw new SenderKeyError("Failed to rotate sender key state")
     }
 
     const chainKey = state.getSenderChainKey()
