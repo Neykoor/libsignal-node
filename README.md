@@ -47,11 +47,6 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 - Misma base criptográfica que `libsignal-node` (curve25519 y `protobufjs`), aquí vía `@neykoor/curve25519-ts`
 - Soporte nativo de `x25519` vía `node:crypto` con fallback a `@neykoor/curve25519-ts`
 
-### Pendiente por traer desde `libsignal-node` (roadmap)
-
-- 🔁 **Workflows de CI/CD** (`.github/workflows`) — build, lint y publish automático a npm, como los que trae la original.
-- 📜 **`SECURITY.md` y `CODE_OF_CONDUCT.md`** — políticas de reporte de vulnerabilidades y de comunidad que la original sí documenta.
-
 ## 📦 Instalación
 
 ```bash
