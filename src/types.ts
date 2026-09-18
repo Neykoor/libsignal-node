@@ -22,6 +22,7 @@ export interface SignalStorage {
 export interface SenderKeyStore {
   loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord | undefined>
   storeSenderKey(senderKeyName: SenderKeyName, record: SenderKeyRecord): Promise<void>
+  removeSenderKey(senderKeyName: SenderKeyName): Promise<void> | void
 }
 
 export interface DeviceKeyBundle {
