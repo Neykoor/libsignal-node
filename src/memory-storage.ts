@@ -48,6 +48,10 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
     this.senderKeys.set(senderKeyName.serialize(), record)
   }
 
+  async removeSenderKey(senderKeyName: SenderKeyName): Promise<void> {
+    this.senderKeys.delete(senderKeyName.serialize())
+  }
+
   async isTrustedIdentity(identifier: string, identityKey: Buffer, _direction: Direction): Promise<boolean> {
     const existing = this.trustedIdentities.get(identifier)
     if (!existing) {
