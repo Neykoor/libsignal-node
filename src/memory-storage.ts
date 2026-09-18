@@ -4,7 +4,9 @@ import type { Direction } from "./direction"
 import type { SignedPreKey } from "./keyhelper"
 import type { PreKeyPoolStorage } from "./prekey-pool"
 import { SessionRecord } from "./session-record"
-import type { SignalStorage } from "./types"
+import type { SenderKeyName } from "./sender-key-name"
+import { SenderKeyRecord } from "./sender-key-record"
+import type { SenderKeyStore, SignalStorage } from "./types"
 
 function safeEqual(a: Buffer, b: Buffer): boolean {
   if (a.byteLength !== b.byteLength) {
@@ -14,13 +16,14 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
   return timingSafeEqual(a, b)
 }
 
-export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage {
+export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, SenderKeyStore {
   private identityKeyPair: KeyPair
   private registrationId: number
   private sessions = new Map<string, SessionRecord>()
   private preKeys = new Map<number, KeyPair>()
   private signedPreKeys = new Map<number, KeyPair>()
   private trustedIdentities = new Map<string, Buffer>()
+  private senderKeys = new Map<string, SenderKeyRecord>()
   private nextPreKeyId = 1
   private latestSignedPreKey: SignedPreKey | undefined
 
@@ -35,6 +38,14 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage {
 
   async storeSession(id: string, session: SessionRecord): Promise<void> {
     this.sessions.set(id, session)
+  }
+
+  async loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord | undefined> {
+    return this.senderKeys.get(senderKeyName.serialize())
+  }
+
+  async storeSenderKey(senderKeyName: SenderKeyName, record: SenderKeyRecord): Promise<void> {
+    this.senderKeys.set(senderKeyName.serialize(), record)
   }
 
   async isTrustedIdentity(identifier: string, identityKey: Buffer, _direction: Direction): Promise<boolean> {
