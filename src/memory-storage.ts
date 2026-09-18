@@ -16,6 +16,8 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
   return timingSafeEqual(a, b)
 }
 
+const DEFAULT_SIGNED_PRE_KEY_GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000
+
 export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, SenderKeyStore {
   private identityKeyPair: KeyPair
   private registrationId: number
@@ -24,12 +26,19 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
   private signedPreKeys = new Map<number, KeyPair>()
   private trustedIdentities = new Map<string, Buffer>()
   private senderKeys = new Map<string, SenderKeyRecord>()
+  private retiredSignedPreKeys = new Map<number, number>()
   private nextPreKeyId = 1
   private latestSignedPreKey: SignedPreKey | undefined
+  private signedPreKeyGracePeriodMs: number
 
-  constructor(identityKeyPair: KeyPair, registrationId: number) {
+  constructor(
+    identityKeyPair: KeyPair,
+    registrationId: number,
+    signedPreKeyGracePeriodMs: number = DEFAULT_SIGNED_PRE_KEY_GRACE_PERIOD_MS
+  ) {
     this.identityKeyPair = identityKeyPair
     this.registrationId = registrationId
+    this.signedPreKeyGracePeriodMs = signedPreKeyGracePeriodMs
   }
 
   async loadSession(id: string): Promise<SessionRecord | undefined> {
@@ -111,8 +120,28 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
       return
     }
 
+    if (this.latestSignedPreKey && this.latestSignedPreKey.keyId !== idOrRecord.keyId) {
+      this.retiredSignedPreKeys.set(this.latestSignedPreKey.keyId, Date.now())
+    }
+
     this.signedPreKeys.set(idOrRecord.keyId, idOrRecord.keyPair)
     this.latestSignedPreKey = idOrRecord
+    this.pruneRetiredSignedPreKeys()
+  }
+
+  async removeSignedPreKey(id: number): Promise<void> {
+    this.signedPreKeys.delete(id)
+    this.retiredSignedPreKeys.delete(id)
+  }
+
+  private pruneRetiredSignedPreKeys(): void {
+    const now = Date.now()
+    for (const [id, retiredAt] of this.retiredSignedPreKeys) {
+      if (now - retiredAt >= this.signedPreKeyGracePeriodMs) {
+        this.signedPreKeys.delete(id)
+        this.retiredSignedPreKeys.delete(id)
+      }
+    }
   }
 
   async getPreKeyCount(): Promise<number> {
