@@ -1,6 +1,7 @@
 import * as curveJs from "@neykoor/curve25519-ts"
 import * as nodeCrypto from "crypto"
 import { getLogger } from "./logger"
+import { wipeBuffer } from "./util"
 
 const PUBLIC_KEY_DER_PREFIX = Buffer.from([48, 42, 48, 5, 6, 3, 43, 101, 110, 3, 33, 0])
 const PRIVATE_KEY_DER_PREFIX = Buffer.from([48, 46, 2, 1, 0, 48, 5, 6, 3, 43, 101, 110, 4, 34, 4, 32])
@@ -70,7 +71,12 @@ function unclampEd25519PrivateKey(clampedSk: Uint8Array): Uint8Array {
 export function getPublicFromPrivateKey(privKey: Uint8Array): Buffer {
   const unclampedPK = unclampEd25519PrivateKey(privKey)
   const keyPair = curveJs.generateKeyPair(unclampedPK)
-  return prefixKeyInPublicKey(Buffer.from(keyPair.public))
+  const pubKey = prefixKeyInPublicKey(Buffer.from(keyPair.public))
+
+  unclampedPK.fill(0)
+  keyPair.private.fill(0)
+
+  return pubKey
 }
 
 export function generateKeyPair(): KeyPair {
@@ -90,10 +96,12 @@ export function generateKeyPair(): KeyPair {
   } catch (e) {
     getLogger().debug(`x25519 native keygen failed, falling back to curve25519-js: ${(e as Error)?.message}`)
     const keyPair = curveJs.generateKeyPair(nodeCrypto.randomBytes(32))
-    return {
-      privKey: Buffer.from(keyPair.private),
-      pubKey: prefixKeyInPublicKey(Buffer.from(keyPair.public))
-    }
+    const privKey = Buffer.from(keyPair.private)
+    const pubKey = prefixKeyInPublicKey(Buffer.from(keyPair.public))
+
+    keyPair.private.fill(0)
+
+    return { privKey, pubKey }
   }
 }
 
@@ -130,10 +138,12 @@ export async function generateKeyPairAsync(): Promise<KeyPair> {
     getLogger().debug(`x25519 native async keygen failed, falling back to curve25519-js: ${(e as Error)?.message}`)
     await new Promise((resolve) => setImmediate(resolve))
     const keyPair = curveJs.generateKeyPair(nodeCrypto.randomBytes(32))
-    return {
-      privKey: Buffer.from(keyPair.private),
-      pubKey: prefixKeyInPublicKey(Buffer.from(keyPair.public))
-    }
+    const privKey = Buffer.from(keyPair.private)
+    const pubKey = prefixKeyInPublicKey(Buffer.from(keyPair.public))
+
+    keyPair.private.fill(0)
+
+    return { privKey, pubKey }
   }
 }
 
@@ -146,8 +156,9 @@ export function calculateAgreement(pubKeyInput: Uint8Array, privKey: Uint8Array)
   }
 
   if (typeof nodeCrypto.diffieHellman === "function") {
+    const privKeyDer = Buffer.concat([PRIVATE_KEY_DER_PREFIX, privKey])
     const nodePrivateKey = nodeCrypto.createPrivateKey({
-      key: Buffer.concat([PRIVATE_KEY_DER_PREFIX, privKey]),
+      key: privKeyDer,
       format: "der",
       type: "pkcs8"
     })
@@ -156,6 +167,8 @@ export function calculateAgreement(pubKeyInput: Uint8Array, privKey: Uint8Array)
       format: "der",
       type: "spki"
     })
+
+    wipeBuffer(privKeyDer)
 
     return assertNotLowOrderSecret(
       nodeCrypto.diffieHellman({
