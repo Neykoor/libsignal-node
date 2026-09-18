@@ -46,6 +46,17 @@ function scrubPubKeyFormat(pubKey: Uint8Array): Buffer {
   return Buffer.from(pubKey)
 }
 
+function assertNotLowOrderSecret(secret: Buffer): Buffer {
+  let check = 0
+  for (let i = 0; i < secret.byteLength; i++) {
+    check |= secret[i]!
+  }
+  if (check === 0) {
+    throw new Error("invalid public key (low-order point)")
+  }
+  return secret
+}
+
 function unclampEd25519PrivateKey(clampedSk: Uint8Array): Uint8Array {
   const unclampedSk = new Uint8Array(clampedSk)
 
@@ -146,14 +157,16 @@ export function calculateAgreement(pubKeyInput: Uint8Array, privKey: Uint8Array)
       type: "spki"
     })
 
-    return nodeCrypto.diffieHellman({
-      privateKey: nodePrivateKey,
-      publicKey: nodePublicKey
-    })
+    return assertNotLowOrderSecret(
+      nodeCrypto.diffieHellman({
+        privateKey: nodePrivateKey,
+        publicKey: nodePublicKey
+      })
+    )
   }
 
   const secret = curveJs.sharedKey(privKey, pubKey)
-  return Buffer.from(secret)
+  return assertNotLowOrderSecret(Buffer.from(secret))
 }
 
 export function calculateSignature(privKey: Uint8Array, message: Uint8Array): Buffer {
