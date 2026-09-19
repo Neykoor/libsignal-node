@@ -1,9 +1,14 @@
 import * as nodeCrypto from "crypto"
 import * as curve from "./curve"
 import type { KeyPair } from "./curve"
+import { MAX_KEY_ID } from "./prekey-bundle-validator"
 
 function isNonNegativeInteger(n: number): boolean {
   return typeof n === "number" && n % 1 === 0 && n >= 0
+}
+
+export function wrapPreKeyId(id: number): number {
+  return (((id - 1) % MAX_KEY_ID) + MAX_KEY_ID) % MAX_KEY_ID + 1
 }
 
 export interface SignedPreKey {
@@ -149,7 +154,7 @@ export async function generatePreKeysBatch(
       if (i >= count) {
         return
       }
-      results[i] = await generatePreKeyAsync(startId + i)
+      results[i] = await generatePreKeyAsync(wrapPreKeyId(startId + i))
     }
   }
 
