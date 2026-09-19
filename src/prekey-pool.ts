@@ -78,7 +78,7 @@ export class PreKeyPoolManager {
       await this.storage.storePreKey(preKey.keyId, preKey.keyPair)
     }
 
-    await this.storage.setNextPreKeyId(startId + count)
+    await this.storage.setNextPreKeyId(keyhelper.wrapPreKeyId(startId + count))
     getLogger().debug(`Replenished ${count} prekeys starting at id ${startId}`)
     return generated
   }
@@ -89,7 +89,7 @@ export class PreKeyPoolManager {
       return latest
     }
 
-    return this.rotateSignedPreKey(latest ? latest.keyId + 1 : 1)
+    return this.rotateSignedPreKey(latest ? keyhelper.wrapPreKeyId(latest.keyId + 1) : 1)
   }
 
   async rotateSignedPreKey(keyId: number): Promise<SignedPreKey> {
