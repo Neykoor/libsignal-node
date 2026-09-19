@@ -34,6 +34,8 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 - 💾 **`MemorySignalStorage` y `FileSignalStorage` incluidas** — implementaciones listas para usar de `SignalStorage` (sesiones, prekeys, identidades de confianza) **y** `SenderKeyStore` (sender keys de grupo). `FileSignalStorage` persiste todo a un único archivo JSON en disco (escritura atómica con debounce), para bots que necesitan sobrevivir reinicios. En la librería original tienes que escribir tu propio storage desde cero, no traen ninguno.
 - 🔄 **Rotación de sender key al salir un miembro del grupo** (`GroupSessionBuilder.rotate`) — genera una sender key nueva desde cero y descarta la cadena anterior, para que un miembro que sale del grupo no pueda derivar mensajes futuros a partir del chain key que ya tenía. La original no expone ninguna forma de rotar o invalidar una sender key ya distribuida.
 - 🧹 **Limpieza automática de signed prekeys retiradas** — al rotar el signed prekey, `MemorySignalStorage`/`FileSignalStorage` guardan el anterior por un grace period configurable (por defecto 3 días, para no romper prekey messages en tránsito) y luego lo borran solos. La original no borra nunca los signed prekeys viejos, se acumulan indefinidamente.
+- 🔒 **Cifrado en reposo para `FileSignalStorage`** — con `encryptionKey` (32 bytes) cada guardado se cifra con AES-256-GCM antes de tocar disco. Sin esto (o con la librería original, que no trae ningún storage) tu identity key privada y todas tus sesiones quedan en JSON plano en el filesystem.
+- ⏱️ **Mantenimiento automático de prekeys** (`PreKeyPoolManager.startAutoMaintenance`) — repone prekeys y rota el signed prekey solo, sin que el bot tenga que acordarse de llamarlo. La original deja esto completamente en manos de quien la usa.
 - 🧾 **Sistema de logging inyectable** (`setLogger` / `getLogger`) — permite conectar tu logger (pino, winston, consola) o silenciar todo. La original usa `console.error` fijo, sin forma de desactivarlo.
 - 🏷️ **Tipado estricto de punta a punta** — `strict: true`, `noUncheckedIndexedAccess`, interfaces para `SignalStorage`, `DeviceKeyBundle`, `EncryptedMessage`, etc. La original es JS puro sin ningún `.d.ts` propio para su lógica principal.
 - 🟦 **100% TypeScript en `src/`**, incluidos los mensajes protobuf de Signal (`whisper-text-protocol.ts`) — sin un solo `.js` generado a mano.
@@ -114,6 +116,17 @@ const storage = FileSignalStorage.create('./auth/session.json')
 
 Si el archivo no existe, genera `identityKeyPair` y `registrationId` nuevos y los guarda; si existe, carga sesiones, prekeys, sender keys e identidad tal cual quedaron. Cada escritura se debounce y se vuelca a disco de forma atómica. Llama a `storage.flush()` antes de cerrar el proceso para forzar el guardado inmediato.
 
+Para cifrar lo que se guarda en disco, pasa una `encryptionKey` de 32 bytes:
+
+```ts
+import { randomBytes } from 'crypto'
+
+const encryptionKey = randomBytes(32) // guárdala fuera del código (variable de entorno, secret manager)
+const storage = FileSignalStorage.create('./auth/session.json', { encryptionKey })
+```
+
+Cada guardado se cifra con AES-256-GCM (IV aleatorio por escritura + auth tag). Si el archivo ya está cifrado y no le das la `encryptionKey` al cargarlo, tira error en vez de fallar en silencio.
+
 ## 👥 Mensajería de grupo
 
 ```ts
@@ -133,6 +146,22 @@ Cuando un miembro sale del grupo, rota tu propia sender key para que no pueda de
 ```ts
 const newDistributionMessage = await groupBuilder.rotate(senderKeyName)
 // reenviar newDistributionMessage a los miembros que quedan
+```
+
+## 🔑 Mantenimiento de prekeys
+
+`PreKeyPoolManager` repone las prekeys y rota el signed prekey cuando hace falta. `startAutoMaintenance()` lo deja corriendo solo:
+
+```ts
+import { PreKeyPoolManager } from '@neykoor/libsignal-node'
+
+const poolManager = new PreKeyPoolManager(storage, identityKeyPair)
+const stopMaintenance = poolManager.startAutoMaintenance() // revisa cada hora por defecto
+
+process.on('SIGINT', () => {
+  stopMaintenance()
+  process.exit(0)
+})
 ```
 
 ## 🧪 Compilar desde el código fuente
