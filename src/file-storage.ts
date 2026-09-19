@@ -203,6 +203,16 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
     this.scheduleSave()
   }
 
+  async removeGroupSessions(groupId: string): Promise<void> {
+    const prefix = `${groupId}::`
+    for (const key of this.senderKeys.keys()) {
+      if (key.startsWith(prefix)) {
+        this.senderKeys.delete(key)
+      }
+    }
+    this.scheduleSave()
+  }
+
   async isTrustedIdentity(identifier: string, identityKey: Buffer, _direction: Direction): Promise<boolean> {
     const existing = this.trustedIdentities.get(identifier)
     if (!existing) {
@@ -325,4 +335,4 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
     return this.latestSignedPreKey
   }
-                       }
+                      }
