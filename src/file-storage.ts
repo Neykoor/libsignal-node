@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "crypto"
+import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from "crypto"
 import * as fs from "fs"
 import * as path from "path"
 import type { KeyPair } from "./curve"
@@ -13,6 +13,9 @@ import type { SenderKeyStore, SignalStorage } from "./types"
 
 const DEFAULT_SIGNED_PRE_KEY_GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000
 const DEFAULT_SAVE_DEBOUNCE_MS = 25
+const ENCRYPTION_KEY_LENGTH = 32
+const ENCRYPTION_ALGORITHM = "aes-256-gcm"
+const ENCRYPTION_IV_LENGTH = 12
 
 interface PersistedState {
   identityKeyPair: KeyPair
@@ -30,6 +33,46 @@ interface PersistedState {
 interface FileSignalStorageOptions {
   signedPreKeyGracePeriodMs?: number
   saveDebounceMs?: number
+  encryptionKey?: Buffer
+}
+
+interface EncryptedPayload {
+  encrypted: true
+  iv: string
+  authTag: string
+  data: string
+}
+
+function isEncryptedPayload(value: unknown): value is EncryptedPayload {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    (value as { encrypted?: unknown }).encrypted === true &&
+    typeof (value as { iv?: unknown }).iv === "string" &&
+    typeof (value as { authTag?: unknown }).authTag === "string" &&
+    typeof (value as { data?: unknown }).data === "string"
+  )
+}
+
+function encryptPayload(plaintext: string, key: Buffer): string {
+  const iv = randomBytes(ENCRYPTION_IV_LENGTH)
+  const cipher = createCipheriv(ENCRYPTION_ALGORITHM, key, iv)
+  const ciphertext = Buffer.concat([cipher.update(plaintext, "utf-8"), cipher.final()])
+  const payload: EncryptedPayload = {
+    encrypted: true,
+    iv: iv.toString("base64"),
+    authTag: cipher.getAuthTag().toString("base64"),
+    data: ciphertext.toString("base64")
+  }
+
+  return JSON.stringify(payload)
+}
+
+function decryptPayload(payload: EncryptedPayload, key: Buffer): string {
+  const decipher = createDecipheriv(ENCRYPTION_ALGORITHM, key, Buffer.from(payload.iv, "base64"))
+  decipher.setAuthTag(Buffer.from(payload.authTag, "base64"))
+  const plaintext = Buffer.concat([decipher.update(Buffer.from(payload.data, "base64")), decipher.final()])
+  return plaintext.toString("utf-8")
 }
 
 function bufferReviver(_key: string, value: unknown): unknown {
@@ -67,6 +110,7 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   private latestSignedPreKey: SignedPreKey | undefined
   private signedPreKeyGracePeriodMs: number
   private saveDebounceMs: number
+  private encryptionKey: Buffer | undefined
   private saveTimer: ReturnType<typeof setTimeout> | undefined
 
   private constructor(
@@ -80,14 +124,32 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
     this.registrationId = registrationId
     this.signedPreKeyGracePeriodMs = options.signedPreKeyGracePeriodMs ?? DEFAULT_SIGNED_PRE_KEY_GRACE_PERIOD_MS
     this.saveDebounceMs = options.saveDebounceMs ?? DEFAULT_SAVE_DEBOUNCE_MS
+    this.encryptionKey = options.encryptionKey
   }
 
   static create(filePath: string, options: FileSignalStorageOptions = {}): FileSignalStorage {
+    if (options.encryptionKey && options.encryptionKey.length !== ENCRYPTION_KEY_LENGTH) {
+      throw new RangeError(`encryptionKey must be ${ENCRYPTION_KEY_LENGTH} bytes`)
+    }
+
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
 
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8")
-      const data: PersistedState = JSON.parse(raw, bufferReviver)
+      const parsed: unknown = JSON.parse(raw)
+
+      let json: string
+      if (isEncryptedPayload(parsed)) {
+        if (!options.encryptionKey) {
+          throw new Error("File is encrypted; encryptionKey is required")
+        }
+
+        json = decryptPayload(parsed, options.encryptionKey)
+      } else {
+        json = raw
+      }
+
+      const data: PersistedState = JSON.parse(json, bufferReviver)
       const storage = new FileSignalStorage(filePath, data.identityKeyPair, data.registrationId, options)
       storage.applySnapshot(data)
       return storage
@@ -155,8 +217,10 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   }
 
   private save(): void {
+    const json = JSON.stringify(this.toSnapshot())
+    const payload = this.encryptionKey ? encryptPayload(json, this.encryptionKey) : json
     const tmpPath = `${this.filePath}.tmp`
-    fs.writeFileSync(tmpPath, JSON.stringify(this.toSnapshot()))
+    fs.writeFileSync(tmpPath, payload)
     fs.renameSync(tmpPath, this.filePath)
   }
 
@@ -335,4 +399,4 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
     return this.latestSignedPreKey
   }
-                      }
+                     }
