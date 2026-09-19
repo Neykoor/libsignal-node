@@ -6,7 +6,7 @@ const MAX_REGISTRATION_ID = 0x3fff
 const IDENTITY_KEY_LENGTH = 33
 const PUBLIC_KEY_LENGTH = 33
 const SIGNATURE_LENGTH = 64
-const MAX_KEY_ID = 0xffffff
+export const MAX_KEY_ID = 0xffffff
 
 function isNonNegativeInteger(n: unknown): n is number {
   return typeof n === "number" && Number.isInteger(n) && n >= 0
