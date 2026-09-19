@@ -73,13 +73,28 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
 
   async saveIdentity(identifier: string, identityKey: Buffer): Promise<boolean> {
     const existing = this.trustedIdentities.get(identifier)
+    const changed = !existing || !safeEqual(existing, identityKey)
     this.trustedIdentities.set(identifier, identityKey)
-    return !existing || !safeEqual(existing, identityKey)
+
+    if (existing && changed) {
+      this.removeSessionsForIdentifier(identifier)
+    }
+
+    return changed
   }
 
   async removeIdentity(identifier: string): Promise<void> {
     this.trustedIdentities.delete(identifier)
-    this.sessions.delete(identifier)
+    this.removeSessionsForIdentifier(identifier)
+  }
+
+  private removeSessionsForIdentifier(identifier: string): void {
+    const prefix = `${identifier}.`
+    for (const key of this.sessions.keys()) {
+      if (key === identifier || key.startsWith(prefix)) {
+        this.sessions.delete(key)
+      }
+    }
   }
 
   async loadPreKey(id?: number | string): Promise<KeyPair | undefined> {
@@ -159,4 +174,4 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
   async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
     return this.latestSignedPreKey
   }
-}
+  }
