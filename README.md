@@ -30,8 +30,10 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 - 🛡️ **Verificación de firma real en `initOutgoing`** — la librería original invoca `curve.verifySignature(..., true)`, y ese cuarto parámetro (`isInit`) hace que la firma del signed prekey **nunca se valide** (`return isInit ? true : curveJs.verify(...)`). En `libsignal-node-ts` se eliminó ese bypass: la firma del signed prekey siempre se verifica de verdad antes de iniciar sesión.
 - ✅ **Validador de prekey bundles** (`assertValidDeviceKeyBundle`) — módulo nuevo que revisa longitudes de claves, rangos de `registrationId` y `keyId` antes de aceptar un bundle remoto. La librería original no valida nada de esto, solo confía en la forma del objeto.
 - 🧹 **Borrado de material sensible en memoria** (`wipeBuffer` / `wipeBuffers`) — las claves de mensaje, cadenas y secretos intermedios se ponen a cero después de usarse en `encrypt`/`decrypt`. La versión original nunca limpia estos buffers, quedan en memoria hasta que el GC los recoja.
-- 🔐 **Comparación de identidades a tiempo constante** — `MemorySignalStorage` usa `timingSafeEqual` para comparar identity keys, evitando ataques de timing. La original no trae ningún storage de referencia.
-- 💾 **`MemorySignalStorage` incluida** — implementación lista para usar de `SignalStorage` (sesiones, prekeys, identidades de confianza). En la librería original tienes que escribir tu propio storage desde cero, no traen ninguno.
+- 🔐 **Comparación de identidades a tiempo constante** — `MemorySignalStorage` y `FileSignalStorage` usan `timingSafeEqual` para comparar identity keys, evitando ataques de timing. La original no trae ningún storage de referencia.
+- 💾 **`MemorySignalStorage` y `FileSignalStorage` incluidas** — implementaciones listas para usar de `SignalStorage` (sesiones, prekeys, identidades de confianza) **y** `SenderKeyStore` (sender keys de grupo). `FileSignalStorage` persiste todo a un único archivo JSON en disco (escritura atómica con debounce), para bots que necesitan sobrevivir reinicios. En la librería original tienes que escribir tu propio storage desde cero, no traen ninguno.
+- 🔄 **Rotación de sender key al salir un miembro del grupo** (`GroupSessionBuilder.rotate`) — genera una sender key nueva desde cero y descarta la cadena anterior, para que un miembro que sale del grupo no pueda derivar mensajes futuros a partir del chain key que ya tenía. La original no expone ninguna forma de rotar o invalidar una sender key ya distribuida.
+- 🧹 **Limpieza automática de signed prekeys retiradas** — al rotar el signed prekey, `MemorySignalStorage`/`FileSignalStorage` guardan el anterior por un grace period configurable (por defecto 3 días, para no romper prekey messages en tránsito) y luego lo borran solos. La original no borra nunca los signed prekeys viejos, se acumulan indefinidamente.
 - 🧾 **Sistema de logging inyectable** (`setLogger` / `getLogger`) — permite conectar tu logger (pino, winston, consola) o silenciar todo. La original usa `console.error` fijo, sin forma de desactivarlo.
 - 🏷️ **Tipado estricto de punta a punta** — `strict: true`, `noUncheckedIndexedAccess`, interfaces para `SignalStorage`, `DeviceKeyBundle`, `EncryptedMessage`, etc. La original es JS puro sin ningún `.d.ts` propio para su lógica principal.
 - 🟦 **100% TypeScript en `src/`**, incluidos los mensajes protobuf de Signal (`whisper-text-protocol.ts`) — sin un solo `.js` generado a mano.
@@ -43,7 +45,8 @@ Mismo API, misma criptografía, cero `@ts-ignore`, tipado de punta a punta — y
 ### Lo que tienen en común
 
 - Implementación completa del **Double Ratchet** (X3DH, sesiones, ratcheting)
-- Misma API pública: `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`, `keyhelper`, `curve`, `crypto`
+- Mensajería de **grupo con Sender Key** (`GroupCipher`, `GroupSessionBuilder`, `SenderKeyRecord`, `SenderKeyDistributionMessage`)
+- Misma API pública: `ProtocolAddress`, `SessionBuilder`, `SessionCipher`, `SessionRecord`, `GroupCipher`, `GroupSessionBuilder`, `keyhelper`, `curve`, `crypto`
 - Misma base criptográfica que `libsignal-node` (curve25519 y `protobufjs`), aquí vía `@neykoor/curve25519-ts`
 - Soporte nativo de `x25519` vía `node:crypto` con fallback a `@neykoor/curve25519-ts`
 
@@ -77,7 +80,7 @@ const { PreKeyWhisperMessage } = protobufs
 Y en el `package.json` de tu proyecto, quita la dependencia `libsignal` y agrega:
 
 ```json
-"@neykoor/libsignal-node": "^1.0.5"
+"@neykoor/libsignal-node": "^1.0.10"
 ```
 
 ## 📖 Uso básico
@@ -98,6 +101,39 @@ const { type, body } = await cipher.encrypt(Buffer.from('hola mundo'))
 ```
 
 `storage` debe implementar la interfaz `SignalStorage` exportada desde el paquete (o puedes usar `MemorySignalStorage`, incluida para pruebas rápidas y almacenamiento en memoria).
+
+## 💾 Storage persistente
+
+Para bots que deben sobrevivir reinicios, usa `FileSignalStorage` en vez de `MemorySignalStorage`:
+
+```ts
+import { FileSignalStorage } from '@neykoor/libsignal-node'
+
+const storage = FileSignalStorage.create('./auth/session.json')
+```
+
+Si el archivo no existe, genera `identityKeyPair` y `registrationId` nuevos y los guarda; si existe, carga sesiones, prekeys, sender keys e identidad tal cual quedaron. Cada escritura se debounce y se vuelca a disco de forma atómica. Llama a `storage.flush()` antes de cerrar el proceso para forzar el guardado inmediato.
+
+## 👥 Mensajería de grupo
+
+```ts
+import { GroupSessionBuilder, GroupCipher, SenderKeyName } from '@neykoor/libsignal-node'
+
+const senderKeyName = new SenderKeyName(groupId, addr)
+const groupBuilder = new GroupSessionBuilder(storage)
+const distributionMessage = await groupBuilder.create(senderKeyName)
+// enviar distributionMessage al resto del grupo por sesión 1:1
+
+const groupCipher = new GroupCipher(storage, senderKeyName)
+const ciphertext = await groupCipher.encrypt(Buffer.from('hola grupo'))
+```
+
+Cuando un miembro sale del grupo, rota tu propia sender key para que no pueda descifrar mensajes futuros:
+
+```ts
+const newDistributionMessage = await groupBuilder.rotate(senderKeyName)
+// reenviar newDistributionMessage a los miembros que quedan
+```
 
 ## 🧪 Compilar desde el código fuente
 
