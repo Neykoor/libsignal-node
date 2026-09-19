@@ -61,6 +61,15 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
     this.senderKeys.delete(senderKeyName.serialize())
   }
 
+  async removeGroupSessions(groupId: string): Promise<void> {
+    const prefix = `${groupId}::`
+    for (const key of this.senderKeys.keys()) {
+      if (key.startsWith(prefix)) {
+        this.senderKeys.delete(key)
+      }
+    }
+  }
+
   async isTrustedIdentity(identifier: string, identityKey: Buffer, _direction: Direction): Promise<boolean> {
     const existing = this.trustedIdentities.get(identifier)
     if (!existing) {
@@ -174,4 +183,4 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
   async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
     return this.latestSignedPreKey
   }
-  }
+}
