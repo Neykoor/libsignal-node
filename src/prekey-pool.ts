@@ -126,4 +126,15 @@ export class PreKeyPoolManager {
       signedPreKeyAgeMs: latestSignedPreKey ? Date.now() - latestSignedPreKey.createdAt : undefined
     }
   }
+
+  startAutoMaintenance(intervalMs: number = 60 * 60 * 1000): () => void {
+    const run = (): void => {
+      this.ensurePreKeys().catch(err => getLogger().warn("Failed to ensure prekeys", err))
+      this.ensureSignedPreKey().catch(err => getLogger().warn("Failed to ensure signed prekey", err))
+    }
+
+    run()
+    const timer = setInterval(run, intervalMs)
+    return () => clearInterval(timer)
+  }
 }
