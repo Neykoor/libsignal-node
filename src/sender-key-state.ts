@@ -3,6 +3,24 @@ import { SenderMessageKey } from "./sender-message-key"
 
 const MAX_MESSAGE_KEYS = 2000
 
+function toB64Buffer(value: string | Buffer | { type: "Buffer"; data: number[] } | undefined | null): Buffer {
+  if (Buffer.isBuffer(value)) {
+    return value
+  }
+
+  if (typeof value === "string") {
+    return Buffer.from(value, "base64")
+  }
+
+  if (value && Array.isArray((value as { data?: number[] }).data)) {
+    return Buffer.from((value as { data: number[] }).data)
+  }
+
+  throw new TypeError(
+    `senderKeyState: formato de seed/clave no reconocido (esperaba string base64, Buffer, o {type:'Buffer',data:[]}), recibido: ${JSON.stringify(value)}`
+  )
+}
+
 interface SenderChainKeyStructure {
   iteration: number
   seed: Buffer
@@ -135,14 +153,14 @@ export class SenderKeyState {
     const state = new SenderKeyState(
       data.senderKeyId,
       data.senderChainKey.iteration,
-      Buffer.from(data.senderChainKey.seed, "base64"),
-      Buffer.from(data.senderSigningKey.public, "base64"),
-      data.senderSigningKey.private ? Buffer.from(data.senderSigningKey.private, "base64") : undefined
+      toB64Buffer(data.senderChainKey.seed),
+      toB64Buffer(data.senderSigningKey.public),
+      data.senderSigningKey.private ? toB64Buffer(data.senderSigningKey.private) : undefined
     )
 
     state.senderMessageKeys = data.senderMessageKeys.map((key) => ({
       iteration: key.iteration,
-      seed: Buffer.from(key.seed, "base64")
+      seed: toB64Buffer(key.seed)
     }))
 
     return state
