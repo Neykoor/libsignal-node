@@ -3,7 +3,9 @@ import { SenderMessageKey } from "./sender-message-key"
 
 const MAX_MESSAGE_KEYS = 2000
 
-function toB64Buffer(value: string | Buffer | { type: "Buffer"; data: number[] } | undefined | null): Buffer {
+function toB64Buffer(
+  value: string | Buffer | { type: "Buffer"; data: number[] | string } | undefined | null
+): Buffer {
   if (Buffer.isBuffer(value)) {
     return value
   }
@@ -12,12 +14,12 @@ function toB64Buffer(value: string | Buffer | { type: "Buffer"; data: number[] }
     return Buffer.from(value, "base64")
   }
 
-  if (value && Array.isArray((value as { data?: number[] }).data)) {
-    return Buffer.from((value as { data: number[] }).data)
+  if (value && Array.isArray(value.data)) {
+    return Buffer.from(value.data)
   }
 
-  if (value && typeof (value as { data?: unknown }).data === "string") {
-    return Buffer.from((value as { data: string }).data, "base64")
+  if (value && typeof value.data === "string") {
+    return Buffer.from(value.data, "base64")
   }
 
   throw new TypeError(
