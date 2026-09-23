@@ -16,6 +16,10 @@ function toB64Buffer(value: string | Buffer | { type: "Buffer"; data: number[] }
     return Buffer.from((value as { data: number[] }).data)
   }
 
+  if (value && typeof (value as { data?: unknown }).data === "string") {
+    return Buffer.from((value as { data: string }).data, "base64")
+  }
+
   throw new TypeError(
     `senderKeyState: formato de seed/clave no reconocido (esperaba string base64, Buffer, o {type:'Buffer',data:[]}), recibido: ${JSON.stringify(value)}`
   )
