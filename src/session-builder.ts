@@ -25,12 +25,26 @@ export class SessionBuilder {
 
     const fqAddr = this.addr.toString()
     return await queueJob(fqAddr, async () => {
-      if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
-        throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
-      }
+      try {
+        if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
+          throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
+        }
 
-      if (!curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature)) {
-        throw new Error("Signature validation failed")
+        if (
+          !curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature)
+        ) {
+          throw new Error("Signature validation failed")
+        }
+      } catch (e) {
+        console.error(`[PREKEY-DEBUG] initOutgoing ${fqAddr}:`, (e as Error).message, {
+          identityKey: device.identityKey.toString("hex"),
+          signedPreKeyId: device.signedPreKey.keyId,
+          signedPreKeyPublicKey: device.signedPreKey.publicKey.toString("hex"),
+          signature: device.signedPreKey.signature.toString("hex"),
+          preKeyId: device.preKey?.keyId,
+          registrationId: device.registrationId
+        })
+        throw e
       }
 
       const baseKey = curve.generateKeyPair()
@@ -70,45 +84,57 @@ export class SessionBuilder {
   }
 
   async initIncoming(record: SessionRecord, message: IncomingPreKeyMessage): Promise<number | undefined> {
-    if (!(await this.storage.isTrustedIdentity(this.addr.id, message.identityKey, Direction.RECEIVING))) {
-      throw new errors.UntrustedIdentityKeyError(this.addr.id, message.identityKey)
-    }
-
-    if (record.getSession(message.baseKey)) {
-      return undefined
-    }
-
-    let preKeyPair: KeyPair | undefined
-    if (message.preKeyId !== undefined) {
-      preKeyPair = await this.storage.loadPreKey(message.preKeyId)
-      if (!preKeyPair) {
-        throw new errors.PreKeyError("Invalid PreKey ID")
+    const fqAddr = this.addr.toString()
+    try {
+      if (!(await this.storage.isTrustedIdentity(this.addr.id, message.identityKey, Direction.RECEIVING))) {
+        throw new errors.UntrustedIdentityKeyError(this.addr.id, message.identityKey)
       }
-    }
 
-    const signedPreKeyPair = await this.storage.loadSignedPreKey(message.signedPreKeyId)
-    if (!signedPreKeyPair) {
-      throw new errors.PreKeyError("Missing SignedPreKey")
-    }
+      if (record.getSession(message.baseKey)) {
+        return undefined
+      }
 
-    const existingOpenSession = record.getOpenSession()
-    if (existingOpenSession) {
-      record.closeSession(existingOpenSession)
-    }
+      let preKeyPair: KeyPair | undefined
+      if (message.preKeyId !== undefined) {
+        preKeyPair = await this.storage.loadPreKey(message.preKeyId)
+        if (!preKeyPair) {
+          throw new errors.PreKeyError("Invalid PreKey ID")
+        }
+      }
 
-    record.setSession(
-      await this.initSession(
-        false,
-        preKeyPair,
-        signedPreKeyPair,
-        message.identityKey,
-        message.baseKey,
-        undefined,
-        message.registrationId
+      const signedPreKeyPair = await this.storage.loadSignedPreKey(message.signedPreKeyId)
+      if (!signedPreKeyPair) {
+        throw new errors.PreKeyError("Missing SignedPreKey")
+      }
+
+      const existingOpenSession = record.getOpenSession()
+      if (existingOpenSession) {
+        record.closeSession(existingOpenSession)
+      }
+
+      record.setSession(
+        await this.initSession(
+          false,
+          preKeyPair,
+          signedPreKeyPair,
+          message.identityKey,
+          message.baseKey,
+          undefined,
+          message.registrationId
+        )
       )
-    )
 
-    return message.preKeyId
+      return message.preKeyId
+    } catch (e) {
+      console.error(`[PREKEY-DEBUG] initIncoming ${fqAddr}:`, (e as Error).message, {
+        identityKey: message.identityKey.toString("hex"),
+        baseKey: message.baseKey.toString("hex"),
+        preKeyId: message.preKeyId,
+        signedPreKeyId: message.signedPreKeyId,
+        registrationId: message.registrationId
+      })
+      throw e
+    }
   }
 
   private async initSession(
