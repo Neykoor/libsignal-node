@@ -240,7 +240,7 @@ export class SessionCipher {
       const preKeyProto = protobufs.PreKeyWhisperMessage.decode(data.slice(1))
 
       if (!record) {
-        if (preKeyProto.registrationId == null) {
+        if (!Object.prototype.hasOwnProperty.call(preKeyProto, "registrationId")) {
           throw new errors.PreKeyError("No registrationId")
         }
 
@@ -422,4 +422,4 @@ export class SessionCipher {
       }
     })
   }
-                                                       }
+                 }
