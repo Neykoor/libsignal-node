@@ -17,7 +17,6 @@ interface ProtoReader {
 const createWriter = (): ProtoWriter => $protobuf.Writer.create() as unknown as ProtoWriter
 const createReader = (data: Uint8Array): ProtoReader => $protobuf.Reader.create(data) as unknown as ProtoReader
 
-// ---- SenderKeyMessage ----
 
 export interface ISenderKeyMessageProto {
   id: number
@@ -35,9 +34,9 @@ export const SenderKeyMessageProto = {
   },
 
   encode(message: ISenderKeyMessageProto): Uint8Array {
-    const w = createWriter()
-    if (message.id) w.uint32(8).uint32(message.id)
-    if (message.iteration) w.uint32(16).uint32(message.iteration)
+        const w = createWriter()
+    w.uint32(8).uint32(message.id)
+    w.uint32(16).uint32(message.iteration)
     if (message.ciphertext.length) w.uint32(26).bytes(message.ciphertext)
     return w.finish()
   },
@@ -67,8 +66,6 @@ export const SenderKeyMessageProto = {
   }
 }
 
-// ---- SenderKeyDistributionMessage ----
-
 export interface ISenderKeyDistributionMessageProto {
   id: number
   iteration: number
@@ -87,9 +84,9 @@ export const SenderKeyDistributionMessageProto = {
   },
 
   encode(message: ISenderKeyDistributionMessageProto): Uint8Array {
-    const w = createWriter()
-    if (message.id) w.uint32(8).uint32(message.id)
-    if (message.iteration) w.uint32(16).uint32(message.iteration)
+        const w = createWriter()
+    w.uint32(8).uint32(message.id)
+    w.uint32(16).uint32(message.iteration)
     if (message.chainKey.length) w.uint32(26).bytes(message.chainKey)
     if (message.signingKey.length) w.uint32(34).bytes(message.signingKey)
     return w.finish()
