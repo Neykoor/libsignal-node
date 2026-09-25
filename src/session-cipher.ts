@@ -252,7 +252,7 @@ export class SessionCipher {
         registrationId: preKeyProto.registrationId,
         identityKey: Buffer.from(preKeyProto.identityKey),
         baseKey: Buffer.from(preKeyProto.baseKey),
-        preKeyId: preKeyProto.preKeyId,
+        preKeyId: Object.prototype.hasOwnProperty.call(preKeyProto, "preKeyId") ? preKeyProto.preKeyId : undefined,
         signedPreKeyId: preKeyProto.signedPreKeyId,
         message: Buffer.from(preKeyProto.message)
       })
@@ -422,4 +422,4 @@ export class SessionCipher {
       }
     })
   }
-}
+                                                       }
