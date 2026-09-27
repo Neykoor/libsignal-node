@@ -422,4 +422,4 @@ export class SessionCipher {
       }
     })
   }
-                 }
+  }
