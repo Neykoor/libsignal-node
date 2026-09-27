@@ -5,6 +5,7 @@ import * as curve from "./curve"
 import type { KeyPair } from "./curve"
 import { Direction } from "./direction"
 import * as errors from "./errors"
+import { getLogger } from "./logger"
 import type { ProtocolAddress } from "./protocol-address"
 import { queueJob } from "./queue-job"
 import { assertValidDeviceKeyBundle } from "./prekey-bundle-validator"
@@ -36,7 +37,7 @@ export class SessionBuilder {
           throw new Error("Signature validation failed")
         }
       } catch (e) {
-        console.error(`[PREKEY-DEBUG] initOutgoing ${fqAddr}:`, (e as Error).message, {
+        getLogger().debug(`initOutgoing ${fqAddr} failed: ${(e as Error).message}`, {
           identityKey: device.identityKey.toString("hex"),
           signedPreKeyId: device.signedPreKey.keyId,
           signedPreKeyPublicKey: device.signedPreKey.publicKey.toString("hex"),
@@ -126,7 +127,7 @@ export class SessionBuilder {
 
       return message.preKeyId
     } catch (e) {
-      console.error(`[PREKEY-DEBUG] initIncoming ${fqAddr}:`, (e as Error).message, {
+      getLogger().debug(`initIncoming ${fqAddr} failed: ${(e as Error).message}`, {
         identityKey: message.identityKey.toString("hex"),
         baseKey: message.baseKey.toString("hex"),
         preKeyId: message.preKeyId,
@@ -236,4 +237,4 @@ export class SessionBuilder {
 
     ratchet.rootKey = masterKey[0]!
   }
-}
+                                      }
