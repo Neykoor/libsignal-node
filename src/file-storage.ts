@@ -245,7 +245,8 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   }
 
   async loadSession(id: string): Promise<SessionRecord | undefined> {
-    return this.sessions.get(id)
+    const stored = this.sessions.get(id)
+    return stored ? SessionRecord.deserialize(stored.serialize()) : undefined
   }
 
   async storeSession(id: string, session: SessionRecord): Promise<void> {
@@ -254,7 +255,8 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   }
 
   async loadSenderKey(senderKeyName: SenderKeyName): Promise<SenderKeyRecord | undefined> {
-    return this.senderKeys.get(senderKeyName.serialize())
+    const stored = this.senderKeys.get(senderKeyName.serialize())
+    return stored ? SenderKeyRecord.deserialize(stored.serialize()) : undefined
   }
 
   async storeSenderKey(senderKeyName: SenderKeyName, record: SenderKeyRecord): Promise<void> {
@@ -400,3 +402,4 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
     return this.latestSignedPreKey
   }
                      }
+                      
