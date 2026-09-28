@@ -1,4 +1,4 @@
-import $protobuf from "protobufjs/minimal"
+import $protobuf from "protobufjs/minimal.js"
 
 interface ProtoWriter {
   uint32(value: number): ProtoWriter
