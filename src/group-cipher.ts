@@ -109,7 +109,7 @@ export class GroupCipher {
       senderChainKey = senderChainKey.getNext()
     }
 
-    senderKeyState.setSenderChainKey(senderChainKey)
+    senderKeyState.setSenderChainKey(senderChainKey.getNext())
     return senderChainKey.getSenderMessageKey()
   }
 }
