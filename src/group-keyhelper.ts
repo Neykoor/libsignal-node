@@ -7,7 +7,7 @@ export function generateSenderKey(): Buffer {
 }
 
 export function generateSenderKeyId(): number {
-  return nodeCrypto.randomBytes(4).readUInt32BE(0)
+  return nodeCrypto.randomBytes(4).readUInt32BE(0) & 0x7fffffff
 }
 
 export function generateSenderSigningKey(keyPair?: KeyPair): KeyPair {
