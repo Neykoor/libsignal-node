@@ -2,7 +2,7 @@ import * as crypto from "./crypto"
 
 const VERSION = 0
 
-function iterateHash(data: ArrayBuffer, key: ArrayBuffer, count: number): ArrayBuffer {
+function iterateHash(data: ArrayBuffer, key: Uint8Array, count: number): ArrayBuffer {
     let result: Buffer = Buffer.from(data)
 
   for (let i = 0; i < count; i++) {
@@ -34,7 +34,7 @@ function getEncodedChunk(hash: Uint8Array, offset: number): string {
   return s
 }
 
-async function getDisplayStringFor(identifier: string, key: ArrayBuffer, iterations: number): Promise<string> {
+async function getDisplayStringFor(identifier: string, key: Uint8Array, iterations: number): Promise<string> {
   const bytes = Buffer.concat([Buffer.from(shortToArrayBuffer(VERSION)), Buffer.from(key), Buffer.from(identifier)])
   const arraybuf = new Uint8Array(bytes).buffer
   const output = new Uint8Array(iterateHash(arraybuf, key, iterations))
@@ -58,15 +58,15 @@ export class FingerprintGenerator {
 
   createFor(
     localIdentifier: string,
-    localIdentityKey: ArrayBuffer,
+    localIdentityKey: Uint8Array,
     remoteIdentifier: string,
-    remoteIdentityKey: ArrayBuffer
+    remoteIdentityKey: Uint8Array
   ): Promise<string> {
     if (
       typeof localIdentifier !== "string" ||
       typeof remoteIdentifier !== "string" ||
-      !(localIdentityKey instanceof ArrayBuffer) ||
-      !(remoteIdentityKey instanceof ArrayBuffer)
+      !(localIdentityKey instanceof Uint8Array) ||
+      !(remoteIdentityKey instanceof Uint8Array)
     ) {
       throw new Error("Invalid arguments")
     }
