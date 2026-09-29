@@ -27,14 +27,14 @@ export class SessionBuilder {
     const fqAddr = this.addr.toString()
     return await queueJob(fqAddr, async () => {
       try {
-        if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
-          throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
-        }
-
         if (
           !curve.verifySignature(device.identityKey, device.signedPreKey.publicKey, device.signedPreKey.signature)
         ) {
           throw new Error("Signature validation failed")
+        }
+
+        if (!(await this.storage.isTrustedIdentity(this.addr.id, device.identityKey, Direction.SENDING))) {
+          throw new errors.UntrustedIdentityKeyError(this.addr.id, device.identityKey)
         }
       } catch (e) {
         getLogger().debug(`initOutgoing ${fqAddr} failed: ${(e as Error).message}`, {
@@ -237,4 +237,4 @@ export class SessionBuilder {
 
     ratchet.rootKey = masterKey[0]!
   }
-                                      }
+}
