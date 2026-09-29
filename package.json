@@ -30,7 +30,7 @@
     "verify:proto": "node scripts/verify-proto.mjs"
   },
   "dependencies": {
-    "@neykoor/curve25519-ts": "^0.0.13",
+    "@neykoor/curve25519-ts": "latest",
     "pino": "^9.0.0",
     "protobufjs": "^7.5.5"
   },
