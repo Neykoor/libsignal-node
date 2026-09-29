@@ -5,6 +5,7 @@ import type { KeyPair } from "./curve"
 import type { Direction } from "./direction"
 import * as keyhelper from "./keyhelper"
 import type { SignedPreKey } from "./keyhelper"
+import { getLogger } from "./logger"
 import type { PreKeyPoolStorage } from "./prekey-pool"
 import { SenderKeyRecord } from "./sender-key-record"
 import type { SenderKeyName } from "./sender-key-name"
@@ -231,7 +232,11 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
 
     this.saveTimer = setTimeout(() => {
       this.saveTimer = undefined
-      this.save()
+      try {
+        this.save()
+      } catch (e) {
+        getLogger().warn(`FileSignalStorage save failed: ${(e as Error).message}`, { filePath: this.filePath })
+      }
     }, this.saveDebounceMs)
   }
 
@@ -401,5 +406,4 @@ export class FileSignalStorage implements SignalStorage, PreKeyPoolStorage, Send
   async loadLatestSignedPreKey(): Promise<SignedPreKey | undefined> {
     return this.latestSignedPreKey
   }
-                     }
-                      
+}
