@@ -154,7 +154,7 @@ export class SessionCipher {
           message: result
         })
 
-        if (session.pendingPreKey.preKeyId) {
+        if (session.pendingPreKey.preKeyId !== undefined) {
           preKeyMsg.preKeyId = session.pendingPreKey.preKeyId
         }
 
@@ -422,4 +422,4 @@ export class SessionCipher {
       }
     })
   }
-          }
+}
