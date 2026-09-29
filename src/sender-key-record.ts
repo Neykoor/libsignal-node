@@ -27,6 +27,11 @@ export class SenderKeyRecord {
     signingKeyPublic: Uint8Array,
     signingKeyPrivate?: Uint8Array
   ): void {
+    const existingIndex = this.senderKeyStates.findIndex((state) => state.getKeyId() === id)
+    if (existingIndex !== -1) {
+      this.senderKeyStates.splice(existingIndex, 1)
+    }
+
     this.senderKeyStates.push(new SenderKeyState(id, iteration, chainKey, signingKeyPublic, signingKeyPrivate))
 
     if (this.senderKeyStates.length > MAX_STATES) {
