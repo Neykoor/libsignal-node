@@ -135,6 +135,7 @@ export class PreKeyPoolManager {
 
     run()
     const timer = setInterval(run, intervalMs)
+    timer.unref()
     return () => clearInterval(timer)
   }
 }
