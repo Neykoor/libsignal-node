@@ -460,5 +460,4 @@ export class SessionRecord {
       delete this.sessions[key]
     }
   }
-           }
- 
+              }
