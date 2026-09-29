@@ -17,13 +17,24 @@ export class GroupSessionBuilder {
     senderKeyName: SenderKeyName,
     senderKeyDistributionMessage: SenderKeyDistributionMessage
   ): Promise<void> {
+    const chainKey = senderKeyDistributionMessage.getChainKey()
+    const signatureKey = senderKeyDistributionMessage.getSignatureKey()
+
+    if (chainKey.byteLength !== 32) {
+      throw new SenderKeyError(`Invalid chain key length: ${chainKey.byteLength}`)
+    }
+
+    if (signatureKey.byteLength !== 32 && signatureKey.byteLength !== 33) {
+      throw new SenderKeyError(`Invalid signing key length: ${signatureKey.byteLength}`)
+    }
+
     const senderKeyRecord = (await this.senderKeyStore.loadSenderKey(senderKeyName)) ?? new SenderKeyRecord()
 
     senderKeyRecord.addSenderKeyState(
       senderKeyDistributionMessage.getId(),
       senderKeyDistributionMessage.getIteration(),
-      senderKeyDistributionMessage.getChainKey(),
-      senderKeyDistributionMessage.getSignatureKey()
+      chainKey,
+      signatureKey
     )
 
     await this.senderKeyStore.storeSenderKey(senderKeyName, senderKeyRecord)
