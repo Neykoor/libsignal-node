@@ -1,6 +1,6 @@
 {
   "name": "@neykoor/libsignal-node",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "TypeScript port of libsignal-node, compatible with BaileysX",
   "type": "module",
   "main": "lib/index.js",
