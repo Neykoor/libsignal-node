@@ -269,5 +269,5 @@ El workflow de [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) ejecuta 
 ---
 
 <div align="center">
-Hecho con ☕ para el ecosistema <b>Furina-MD</b> / <b>BaileysX</b>
+Hecho con ☕ para el ecosistema <b>Eris-MD</b> / <b>BaileysX</b>
 </div>
