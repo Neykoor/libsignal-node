@@ -17,6 +17,10 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
   return timingSafeEqual(a, b)
 }
 
+function copyKeyPair(keyPair: KeyPair | undefined): KeyPair | undefined {
+  return keyPair ? { pubKey: Buffer.from(keyPair.pubKey), privKey: Buffer.from(keyPair.privKey) } : undefined
+}
+
 const DEFAULT_SIGNED_PRE_KEY_GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000
 
 export interface MemorySignalStorageOptions {
@@ -156,7 +160,7 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
       return undefined
     }
 
-    return this.preKeys.get(Number(id))
+    return copyKeyPair(this.preKeys.get(Number(id)))
   }
 
   async removePreKey(id: number): Promise<void> {
@@ -212,7 +216,7 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
       return undefined
     }
 
-    return this.signedPreKeys.get(Number(id))
+    return copyKeyPair(this.signedPreKeys.get(Number(id)))
   }
 
   async getOurRegistrationId(): Promise<number> {
@@ -277,3 +281,4 @@ export class MemorySignalStorage implements SignalStorage, PreKeyPoolStorage, Se
     return this.latestSignedPreKey
   }
 }
+ 
