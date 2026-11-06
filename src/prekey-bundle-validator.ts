@@ -3,6 +3,7 @@ import { PreKeyError } from "./errors"
 
 const MIN_REGISTRATION_ID = 1
 const MAX_REGISTRATION_ID = 0x3fff
+const MAX_INCOMING_REGISTRATION_ID = 0xffffffff
 const IDENTITY_KEY_LENGTH = 33
 const PUBLIC_KEY_LENGTH = 33
 const SIGNATURE_LENGTH = 64
@@ -30,6 +31,12 @@ function assertKeyId(value: unknown, field: string): void {
 
 function assertRegistrationId(value: unknown): void {
   if (!isNonNegativeInteger(value) || value < MIN_REGISTRATION_ID || value > MAX_REGISTRATION_ID) {
+    throw new PreKeyError(`Invalid registrationId: ${String(value)}`)
+  }
+}
+
+function assertIncomingRegistrationId(value: unknown): void {
+  if (!isNonNegativeInteger(value) || value < MIN_REGISTRATION_ID || value > MAX_INCOMING_REGISTRATION_ID) {
     throw new PreKeyError(`Invalid registrationId: ${String(value)}`)
   }
 }
@@ -70,7 +77,7 @@ export function assertValidIncomingPreKeyMessage(message: IncomingPreKeyMessage)
   }
 
   if (message.registrationId !== undefined) {
-    assertRegistrationId(message.registrationId)
+    assertIncomingRegistrationId(message.registrationId)
   }
 
   if (message.preKeyId !== undefined) {
