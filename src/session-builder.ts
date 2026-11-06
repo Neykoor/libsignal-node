@@ -210,7 +210,9 @@ export class SessionBuilder {
         session.registrationId = registrationId
         session.currentRatchet = {
           rootKey: masterKey[0]!,
-          ephemeralKeyPair: isInitiator ? curve.generateKeyPair() : ourSignedKey!,
+          ephemeralKeyPair: isInitiator
+            ? curve.generateKeyPair()
+            : { pubKey: Buffer.from(ourSignedKey!.pubKey), privKey: Buffer.from(ourSignedKey!.privKey) },
           lastRemoteEphemeralKey: theirSignedPubKey!,
           previousCounter: 0
         }
@@ -229,7 +231,7 @@ export class SessionBuilder {
 
         return session
       } finally {
-        // masterKey[0] and masterKey[1] are now referenced by the session.
+        
         wipeBuffer(masterKey[2])
       }
     } finally {
@@ -258,7 +260,7 @@ export class SessionBuilder {
 
         ratchet.rootKey = masterKey[0]!
       } finally {
-        // masterKey[0] and masterKey[1] are now referenced by the session.
+        
         wipeBuffer(masterKey[2])
       }
     } finally {
