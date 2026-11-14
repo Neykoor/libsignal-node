@@ -82,8 +82,14 @@ describe("prekey bundle validator", () => {
     assert.doesNotThrow(() => assertValidDeviceKeyBundle(validBundle()))
   })
 
+  it("accepts 32-bit registration ids from remote devices", () => {
+    for (const registrationId of [0x4000, 1167149117, 0xffffffff]) {
+      assert.doesNotThrow(() => assertValidDeviceKeyBundle({ ...validBundle(), registrationId }))
+    }
+  })
+
   it("rejects invalid registration ids", () => {
-    for (const registrationId of [0, -1, 0x4000, 1.5, NaN]) {
+    for (const registrationId of [0, -1, 0x100000000, 1.5, NaN]) {
       assert.throws(() => assertValidDeviceKeyBundle({ ...validBundle(), registrationId }), PreKeyError)
     }
   })
@@ -176,3 +182,4 @@ describe("FingerprintGenerator", () => {
     assert.throws(() => generator.createFor("alice", "not a key", "bob", bobIdentity), /Invalid arguments/)
   })
 })
+                  
